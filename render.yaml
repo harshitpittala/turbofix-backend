@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: turbofix-api
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/app.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: 5432
+      - key: DB_USER
+        value: postgres
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_NAME
+        value: postgres
+      - key: DB_SSL
+        value: true
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 24h
+      - key: FRONTEND_URL
+        value: https://turbofix.in
+      - key: CRM_URL
+        value: https://crm.turbofix.in
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX
+        value: 100
+      - key: MAX_FILE_SIZE_MB
+        value: 10

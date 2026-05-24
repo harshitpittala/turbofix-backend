@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Customers — TurboFix CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/crm/css/crm.css" />
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="crm-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">T</div>
+      <div><div class="logo-text">TurboFix</div><div class="logo-sub">CRM Dashboard</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a href="/crm/index.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>Dashboard</a>
+        <a href="/crm/orders.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>Orders</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Management</div>
+        <a href="/crm/technicians.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>Technicians</a>
+        <a href="/crm/customers.html" class="nav-item active"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Customers</a>
+        <a href="/crm/payments.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>Payments</a>
+      </div>
+      <div class="nav-section">
+        <a href="#" class="nav-item" onclick="logout();return false;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>Sign Out</a>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">Admin</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-toggle" id="menu-toggle"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg></button>
+        <div><div class="header-title">Customers</div></div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="toolbar">
+        <div class="search-box">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>
+          <input type="text" placeholder="Search by name, phone or email…" oninput="debounceSearch(this.value)" />
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Total Orders</th>
+              <th>Member Since</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="customers-tbody">
+            <tr><td colspan="6" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="customers-pagination" class="pagination" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Customer Detail Modal -->
+<div class="modal-overlay" id="customer-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="cust-modal-title">Customer Details</div>
+      <button class="modal-close" onclick="closeModal('customer-modal')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="cust-modal-body">
+      <div class="page-loader"><div class="spinner"></div></div>
+    </div>
+  </div>
+</div>
+
+<script src="/crm/js/config.js"></script>
+<script src="/crm/js/utils.js"></script>
+<script src="/crm/js/auth.js"></script>
+<script>
+  initCRM();
+  let custPage = 1, custSearch = '';
+  let searchTimer;
+
+  async function loadCustomers() {
+    const tbody = document.getElementById('customers-tbody');
+    const params = new URLSearchParams({ page: custPage, limit: 20, ...(custSearch && { search: custSearch }) });
+    const r = await apiCall(`/customers?${params}`);
+    if (!r || !r.ok) { tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;color:var(--danger);padding:30px;">Failed to load</td></tr>`; return; }
+
+    const { data, pagination } = r.data;
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><p>No customers found</p></div></td></tr>`;
+      document.getElementById('customers-pagination').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = data.map(c => `
+      <tr>
+        <td>
+          <div style="display:flex;align-items:center;gap:10px;">
+            ${techAvatar(c.name, '#0066FF', 32)}
+            <div>
+              <div style="font-weight:600;color:var(--text);font-size:13px;">${esc(c.name)}</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <a href="${waLink(c.phone||'')}" target="_blank" style="color:var(--success);font-size:13px;">${esc(c.phone||'—')}</a>
+        </td>
+        <td style="font-size:13px;">${esc(c.email||'—')}</td>
+        <td>
+          <span style="font-weight:700;color:var(--text);">${c.total_orders}</span>
+          <span style="color:var(--text-muted);font-size:11px;"> orders</span>
+        </td>
+        <td style="font-size:12px;color:var(--text-muted);">${formatDate(c.created_at)}</td>
+        <td>
+          <button class="btn btn-secondary btn-sm" onclick="openCustomerModal(${c.id})">View Details</button>
+        </td>
+      </tr>
+    `).join('');
+
+    renderPagination('customers-pagination', pagination, 'goToPage');
+  }
+
+  function goToPage(p) { custPage = p; loadCustomers(); }
+  function debounceSearch(val) {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => { custSearch = val; custPage = 1; loadCustomers(); }, 350);
+  }
+
+  async function openCustomerModal(id) {
+    openModal('customer-modal');
+    const body = document.getElementById('cust-modal-body');
+    body.innerHTML = '<div class="page-loader"><div class="spinner"></div></div>';
+
+    const r = await apiCall(`/customers/${id}`);
+    if (!r || !r.ok) { body.innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px;">Failed to load</p>'; return; }
+    const c = r.data.data;
+    document.getElementById('cust-modal-title').textContent = c.name;
+
+    body.innerHTML = `
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px;">
+        ${techAvatar(c.name, '#0066FF', 56)}
+        <div>
+          <div style="font-size:18px;font-weight:700;">${esc(c.name)}</div>
+          <div style="font-size:13px;color:var(--text-muted);">Member since ${formatDate(c.created_at)}</div>
+          <div style="margin-top:6px;display:flex;gap:8px;">
+            <a href="${waLink(c.phone||'')}" target="_blank" class="btn btn-success btn-sm">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"/></svg>
+              WhatsApp
+            </a>
+          </div>
+        </div>
+        <div style="margin-left:auto;text-align:right;">
+          <div style="font-size:28px;font-weight:800;color:var(--text);">${c.total_orders}</div>
+          <div style="font-size:12px;color:var(--text-muted);">Total Orders</div>
+          <div style="font-size:16px;font-weight:700;color:var(--success);margin-top:6px;">${formatCurrency(c.total_paid)}</div>
+          <div style="font-size:11px;color:var(--text-muted);">Total Paid</div>
+        </div>
+      </div>
+
+      <div class="info-grid" style="margin-bottom:20px;">
+        <div class="info-item"><div class="info-label">Phone</div><div class="info-value">${esc(c.phone||'—')}</div></div>
+        <div class="info-item"><div class="info-label">Email</div><div class="info-value">${esc(c.email||'—')}</div></div>
+        <div class="info-item" style="grid-column:1/-1;"><div class="info-label">Address</div><div class="info-value">${esc(c.address||'—')}</div></div>
+      </div>
+
+      <div class="card card-sm">
+        <div class="card-title" style="font-size:13px;margin-bottom:12px;">Order History</div>
+        ${c.orders && c.orders.length ? `
+          <table style="font-size:12px;width:100%;border-collapse:collapse;">
+            <thead><tr style="border-bottom:1px solid var(--border);">
+              <th style="padding:8px 0;text-align:left;color:var(--text-muted);font-weight:600;">Order ID</th>
+              <th style="padding:8px 0;text-align:left;color:var(--text-muted);font-weight:600;">Device</th>
+              <th style="padding:8px 0;text-align:left;color:var(--text-muted);font-weight:600;">Status</th>
+              <th style="padding:8px 0;text-align:left;color:var(--text-muted);font-weight:600;">Cost</th>
+              <th style="padding:8px 0;text-align:left;color:var(--text-muted);font-weight:600;">Date</th>
+            </tr></thead>
+            <tbody>${c.orders.map(o => `<tr style="border-bottom:1px solid var(--border);">
+              <td style="padding:8px 0;"><a href="/crm/orders.html?id=${o.order_id}" style="color:var(--accent);font-weight:600;">${o.order_id}</a></td>
+              <td style="padding:8px 0;color:var(--text-dim);">${esc(o.device_brand)} ${esc(o.device_model)}</td>
+              <td style="padding:8px 0;">${statusBadge(o.status)}</td>
+              <td style="padding:8px 0;font-weight:600;color:var(--text);">${formatCurrency(o.actual_cost||o.estimated_cost)}</td>
+              <td style="padding:8px 0;color:var(--text-muted);">${formatDate(o.created_at)}</td>
+            </tr>`).join('')}</tbody>
+          </table>
+        ` : '<p style="font-size:13px;color:var(--text-muted);">No orders yet</p>'}
+      </div>
+    `;
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+  });
+
+  loadCustomers();
+</script>
+</body>
+</html>

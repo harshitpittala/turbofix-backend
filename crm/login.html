@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TurboFix CRM — Login</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/crm/css/crm.css" />
+  <style>
+    .input-icon { position: relative; }
+    .input-icon svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); pointer-events: none; }
+    .input-icon input { padding-left: 40px; }
+    .eye-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; }
+    .eye-toggle svg { width: 16px; height: 16px; }
+    .form-control { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 11px 14px; font-size: 14px; transition: border-color .2s, box-shadow .2s; outline: none; }
+    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
+    .form-control::placeholder { color: var(--text-muted); }
+    .login-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-muted); font-size: 12px; }
+    .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  </style>
+</head>
+<body>
+  <div id="toast-container"></div>
+
+  <div class="login-page">
+    <div class="login-orb a"></div>
+    <div class="login-orb b"></div>
+
+    <div class="login-box">
+      <!-- Logo -->
+      <div class="login-logo">
+        <div class="icon">T</div>
+        <div>
+          <div class="login-title">TurboFix</div>
+          <div class="login-subtitle">CRM Dashboard</div>
+        </div>
+      </div>
+
+      <!-- Role tabs -->
+      <div class="login-tabs">
+        <button class="login-tab active" id="tab-admin" onclick="switchTab('admin')">Admin</button>
+        <button class="login-tab" id="tab-technician" onclick="switchTab('technician')">Technician</button>
+      </div>
+
+      <!-- Login form -->
+      <form id="login-form" onsubmit="handleLogin(event)">
+        <div class="form-group">
+          <label class="form-label">Email address</label>
+          <div class="input-icon">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
+            </svg>
+            <input type="email" id="email" class="form-control" placeholder="admin@turbofix.in" required autocomplete="email" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <div class="input-icon" style="position:relative;">
+            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
+            </svg>
+            <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password" />
+            <button type="button" class="eye-toggle" onclick="togglePw()">
+              <svg id="eye-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-lg" style="width:100%;justify-content:center;margin-top:8px;" id="login-btn">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/>
+          </svg>
+          <span id="login-btn-text">Sign In</span>
+        </button>
+      </form>
+
+      <div style="margin-top:24px;padding:16px;background:var(--surface2);border-radius:var(--radius-sm);font-size:12px;color:var(--text-muted);border:1px solid var(--border);">
+        <strong style="color:var(--text-dim);">Default credentials:</strong><br/>
+        Admin: admin@turbofix.in / Admin@TurboFix2024<br/>
+        <span style="color:var(--warning);">Change password after first login.</span>
+      </div>
+    </div>
+  </div>
+
+  <script src="/crm/js/config.js"></script>
+  <script src="/crm/js/utils.js"></script>
+  <script>
+    let activeRole = 'admin';
+
+    // Redirect if already logged in
+    if (localStorage.getItem('crm_token')) {
+      window.location.href = '/crm/index.html';
+    }
+
+    function switchTab(role) {
+      activeRole = role;
+      document.getElementById('tab-admin').classList.toggle('active', role === 'admin');
+      document.getElementById('tab-technician').classList.toggle('active', role === 'technician');
+    }
+
+    function togglePw() {
+      const input = document.getElementById('password');
+      input.type = input.type === 'password' ? 'text' : 'password';
+    }
+
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const btn      = document.getElementById('login-btn');
+      const btnText  = document.getElementById('login-btn-text');
+
+      btn.disabled = true;
+      btnText.textContent = 'Signing in…';
+
+      const endpoint = activeRole === 'admin'
+        ? '/auth/admin/login'
+        : '/auth/technician/login';
+
+      const result = await apiCall(endpoint, {
+        method: 'POST',
+        body:   JSON.stringify({ email, password }),
+      });
+
+      btn.disabled = false;
+      btnText.textContent = 'Sign In';
+
+      if (!result) return;
+      if (!result.ok) {
+        showToast(result.data.message || 'Login failed', 'error');
+        return;
+      }
+
+      localStorage.setItem('crm_token', result.data.token);
+      localStorage.setItem('crm_user',  JSON.stringify(result.data.user));
+      window.location.href = '/crm/index.html';
+    }
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -6,7 +6,7 @@
   <title>TurboFix CRM — Login</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/crm/css/crm.css" />
+  <link rel="stylesheet" href="./css/crm.css" />
   <style>
     .input-icon { position: relative; }
     .input-icon svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); pointer-events: none; }
@@ -87,14 +87,14 @@
     </div>
   </div>
 
-  <script src="/crm/js/config.js"></script>
-  <script src="/crm/js/utils.js"></script>
+  <script src="./js/config.js"></script>
+  <script src="./js/utils.js"></script>
   <script>
     let activeRole = 'admin';
 
     // Redirect if already logged in
     if (localStorage.getItem('crm_token')) {
-      window.location.href = '/crm/index.html';
+      window.location.href = './index.html';
     }
 
     function switchTab(role) {
@@ -138,8 +138,9 @@
 
       localStorage.setItem('crm_token', result.data.token);
       localStorage.setItem('crm_user',  JSON.stringify(result.data.user));
-      window.location.href = '/crm/index.html';
+      window.location.href = './index.html';
     }
   </script>
 </body>
 </html>
+

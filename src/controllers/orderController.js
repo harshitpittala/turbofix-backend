@@ -122,6 +122,7 @@ const getOrders = async (req, res, next) => {
     const {
       page = 1, limit = 20, status, search, technician_id,
       date_from, date_to, priority,
+      sort_by = 'created_at', sort_dir = 'desc',
     } = req.query;
 
     const offset = (parseInt(page) - 1) * parseInt(limit);
@@ -143,6 +144,17 @@ const getOrders = async (req, res, next) => {
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
+    // Whitelist sort columns to prevent SQL injection
+    const ALLOWED_SORT = {
+      created_at:  'ro.created_at',
+      updated_at:  'ro.updated_at',
+      actual_cost: 'ro.actual_cost',
+      estimated_cost: 'ro.estimated_cost',
+      status:      'ro.status',
+    };
+    const orderCol = ALLOWED_SORT[sort_by] || 'ro.created_at';
+    const orderDir = sort_dir === 'asc' ? 'ASC' : 'DESC';
+
     const { rows: countRows } = await pool.query(
       `SELECT COUNT(*) AS total FROM repair_orders ro
        LEFT JOIN customers c ON ro.customer_id = c.id ${where}`,
@@ -159,12 +171,17 @@ const getOrders = async (req, res, next) => {
          ro.created_at, ro.updated_at,
          c.id AS customer_id, c.name AS customer_name, c.phone AS customer_phone,
          c.email AS customer_email,
-         t.id AS technician_id, t.name AS technician_name, t.avatar_color
+         t.id AS technician_id, t.name AS technician_name, t.avatar_color,
+         COALESCE((
+           SELECT SUM(p.amount)
+           FROM payments p
+           WHERE p.order_id = ro.id AND p.status IN ('paid', 'partial')
+         ), 0) AS amount_paid
        FROM repair_orders ro
        LEFT JOIN customers c   ON ro.customer_id   = c.id
        LEFT JOIN technicians t ON ro.technician_id = t.id
        ${where}
-       ORDER BY ro.created_at DESC
+       ORDER BY ${orderCol} ${orderDir} NULLS LAST
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, parseInt(limit), offset]
     );

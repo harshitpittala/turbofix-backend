@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Work Done — TurboFix CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/crm.css" />
+  <style>
+    .cost-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .cost-badge.paid   { background: rgba(34,197,94,.12); color: #22C55E; border: 1px solid rgba(34,197,94,.25); }
+    .cost-badge.unpaid { background: rgba(239,68,68,.10); color: #EF4444; border: 1px solid rgba(239,68,68,.22); }
+    .cost-badge.partial{ background: rgba(245,158,11,.12); color: #F59E0B; border: 1px solid rgba(245,158,11,.25); }
+    .invoice-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 10px;
+      border-radius: 7px;
+      border: 1px solid rgba(0,170,255,.3);
+      background: rgba(0,170,255,.07);
+      color: #00AAFF;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+      white-space: nowrap;
+    }
+    .invoice-btn:hover { background: rgba(0,170,255,.15); border-color: rgba(0,170,255,.5); }
+    .invoice-btn svg   { width: 13px; height: 13px; flex-shrink: 0; }
+    .wd-services { font-size: 11px; color: var(--text-muted); max-width: 160px; line-height: 1.5; }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+
+<div class="crm-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">T</div>
+      <div><div class="logo-text">TurboFix</div><div class="logo-sub">CRM Dashboard</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a href="./index.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
+          Dashboard
+        </a>
+        <a href="./orders.html" class="nav-item">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
+          Orders
+        </a>
+        <a href="./workdone.html" class="nav-item active">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Work Done
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Management</div>
+        <a href="./technicians.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>Technicians</a>
+        <a href="./customers.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Customers</a>
+        <a href="./payments.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>Payments</a>
+      </div>
+      <div class="nav-section">
+        <a href="#" class="nav-item" onclick="logout();return false;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>Sign Out</a>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">Admin</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-toggle" id="menu-toggle"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg></button>
+        <div>
+          <div class="header-title">Work Done</div>
+          <div style="font-size:12px;color:var(--text-muted);margin-top:1px;">Delivered &amp; completed repairs</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+          Export CSV
+        </button>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <!-- Stat cards -->
+      <div class="stats-grid" id="wd-stats" style="display:none;margin-bottom:20px;">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">Total Completed</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-revenue">—</div>
+          <div class="stat-label">Total Revenue</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-avg">—</div>
+          <div class="stat-label">Avg. Repair Cost</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-paid">—</div>
+          <div class="stat-label">Fully Paid</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="toolbar">
+        <div class="search-box">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>
+          <input type="text" placeholder="Order ID, customer, phone…" oninput="debounceSearch(this.value)" id="search-input" />
+        </div>
+        <input type="date" class="form-control" style="width:150px;" onchange="applyFilter('date_from',this.value)" title="From date" />
+        <input type="date" class="form-control" style="width:150px;" onchange="applyFilter('date_to',this.value)" title="To date" />
+        <select class="form-control" style="width:150px;" onchange="applyFilter('sort',this.value)">
+          <option value="newest">Newest First</option>
+          <option value="oldest">Oldest First</option>
+          <option value="cost_high">Highest Cost</option>
+          <option value="cost_low">Lowest Cost</option>
+        </select>
+      </div>
+
+      <!-- Table -->
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice #</th>
+              <th>Customer</th>
+              <th>Device</th>
+              <th>Services</th>
+              <th>Cost</th>
+              <th>Payment</th>
+              <th>Technician</th>
+              <th>Completed</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="wd-tbody">
+            <tr><td colspan="9" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="wd-pagination" class="pagination" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Invoice preview modal -->
+<div class="modal-overlay" id="invoice-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title" id="inv-modal-title">Invoice</div>
+        <div style="font-size:12px;color:var(--text-muted);margin-top:2px;" id="inv-modal-sub">—</div>
+      </div>
+      <button class="modal-close" onclick="closeModal('invoice-modal')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="invoice-modal-body">
+      <div class="page-loader"><div class="spinner"></div></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('invoice-modal')">Close</button>
+      <button class="btn btn-primary" id="download-pdf-btn" onclick="downloadPDF()">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;margin-right:6px;"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        Download PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- jsPDF CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="./js/config.js"></script>
+<script src="./js/utils.js"></script>
+<script src="./js/auth.js"></script>
+<script>
+  let currentUser = initCRM();
+  let state = { page: 1, search: '', date_from: '', date_to: '', sort: 'newest' };
+  let searchTimer;
+  let currentInvoiceData = null; // holds order data for PDF generation
+
+  async function loadWorkDone() {
+    const tbody = document.getElementById('wd-tbody');
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>`;
+
+    const sortMap = {
+      newest:    { sort_by: 'created_at', sort_dir: 'desc' },
+      oldest:    { sort_by: 'created_at', sort_dir: 'asc'  },
+      cost_high: { sort_by: 'actual_cost', sort_dir: 'desc' },
+      cost_low:  { sort_by: 'actual_cost', sort_dir: 'asc'  },
+    };
+    const sortOpts = sortMap[state.sort] || sortMap.newest;
+
+    const params = new URLSearchParams({
+      page: state.page,
+      limit: 20,
+      status: 'delivered',
+      ...(state.search    && { search: state.search }),
+      ...(state.date_from && { date_from: state.date_from }),
+      ...(state.date_to   && { date_to: state.date_to }),
+      ...sortOpts,
+    });
+
+    const r = await apiCall(`/orders?${params}`);
+    if (!r || !r.ok) {
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:30px;">Failed to load completed repairs</td></tr>`;
+      return;
+    }
+
+    const { data, pagination } = r.data;
+
+    // Update stats from the first load (no filter applied)
+    if (state.page === 1) updateStats(data);
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
+        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p>No completed repairs found</p>
+      </div></td></tr>`;
+      document.getElementById('wd-pagination').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = data.map(o => {
+      const services = Array.isArray(o.services) ? o.services : tryParseJSON(o.services, []);
+      const cost     = o.actual_cost || o.estimated_cost;
+      const paid     = (o.amount_paid || 0) >= (cost || 0) && cost > 0;
+      const partPaid = (o.amount_paid || 0) > 0 && !paid;
+      const payLabel = paid ? 'Paid' : (partPaid ? 'Partial' : 'Unpaid');
+      const payClass = paid ? 'paid' : (partPaid ? 'partial' : 'unpaid');
+
+      return `
+      <tr>
+        <td class="primary" style="cursor:pointer;font-family:monospace;font-size:12px;" onclick="openInvoiceModal('${esc(o.order_id)}')">
+          ${esc(o.order_id)}
+        </td>
+        <td>
+          <div style="font-weight:600;color:var(--text);font-size:13px;">${esc(o.customer_name||'—')}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${esc(o.customer_phone||'')}</div>
+        </td>
+        <td>
+          <div style="font-size:13px;color:var(--text);">${esc(o.device_brand||'—')}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${esc(o.device_model||'')}</div>
+        </td>
+        <td>
+          <div class="wd-services">${services.map(s => esc(s)).join('<br>')}</div>
+        </td>
+        <td style="font-weight:700;color:var(--text);font-size:13px;">
+          ${formatCurrency(cost)}
+        </td>
+        <td>
+          <span class="cost-badge ${payClass}">${payLabel}</span>
+          ${partPaid ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${formatCurrency(o.amount_paid)} paid</div>` : ''}
+        </td>
+        <td>
+          ${o.technician_name
+            ? `<div style="display:flex;align-items:center;gap:6px;">${techAvatar(o.technician_name,o.avatar_color,22)}<span style="font-size:12px;">${esc(o.technician_name)}</span></div>`
+            : `<span style="color:var(--text-muted);font-size:12px;">—</span>`}
+        </td>
+        <td style="font-size:12px;color:var(--text-muted);">${formatDate(o.updated_at||o.created_at)}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <button class="btn btn-secondary btn-sm" onclick="openInvoiceModal('${esc(o.order_id)}')">View</button>
+            <button class="invoice-btn" onclick="quickDownloadInvoice('${esc(o.order_id)}')">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+              Invoice
+            </button>
+          </div>
+        </td>
+      </tr>`;
+    }).join('');
+
+    renderPagination('wd-pagination', pagination, 'goToPage');
+    document.getElementById('wd-stats').style.display = '';
+  }
+
+  function updateStats(data) {
+    if (!data || !data.length) return;
+    const revenue = data.reduce((sum, o) => sum + Number(o.actual_cost || o.estimated_cost || 0), 0);
+    const avg     = revenue / data.length;
+    const paidCnt = data.filter(o => {
+      const cost = o.actual_cost || o.estimated_cost;
+      return cost > 0 && (o.amount_paid || 0) >= cost;
+    }).length;
+
+    document.getElementById('stat-total').textContent   = data.length;
+    document.getElementById('stat-revenue').textContent = '₹' + revenue.toLocaleString('en-IN');
+    document.getElementById('stat-avg').textContent     = '₹' + Math.round(avg).toLocaleString('en-IN');
+    document.getElementById('stat-paid').textContent    = paidCnt;
+  }
+
+  function tryParseJSON(str, fallback) {
+    try { return JSON.parse(str); } catch { return fallback; }
+  }
+
+  function goToPage(p)         { state.page = p; loadWorkDone(); }
+  function applyFilter(k, v)   { state[k] = v; state.page = 1; loadWorkDone(); }
+  function debounceSearch(val) { clearTimeout(searchTimer); searchTimer = setTimeout(() => applyFilter('search', val), 350); }
+
+  // ── Invoice modal ──────────────────────────────────────────────────────────
+  async function openInvoiceModal(orderId) {
+    openModal('invoice-modal');
+    document.getElementById('inv-modal-title').textContent = `Invoice — ${orderId}`;
+    document.getElementById('inv-modal-sub').textContent   = 'Loading…';
+    document.getElementById('invoice-modal-body').innerHTML = '<div class="page-loader"><div class="spinner"></div></div>';
+    currentInvoiceData = null;
+
+    const r = await apiCall(`/orders/${orderId}`);
+    if (!r || !r.ok) {
+      document.getElementById('invoice-modal-body').innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px;">Failed to load order</p>';
+      return;
+    }
+    const o = r.data.data;
+    // Compute amount_paid from payments array (returned by single-order endpoint)
+    const paymentsArr = Array.isArray(o.payments) ? o.payments : [];
+    const computedPaid = paymentsArr
+      .filter(p => p.status === 'paid' || p.status === 'partial')
+      .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    o.amount_paid = computedPaid || Number(o.amount_paid || 0);
+    currentInvoiceData = o;
+
+    document.getElementById('inv-modal-sub').textContent = formatDateTime(o.updated_at || o.created_at);
+
+    const services = Array.isArray(o.services) ? o.services : tryParseJSON(o.services, []);
+    const cost     = o.actual_cost || o.estimated_cost || 0;
+    const amtPaid  = o.amount_paid || 0;
+    const balance  = Math.max(0, cost - amtPaid);
+    const paid     = amtPaid >= cost && cost > 0;
+    const partPaid = amtPaid > 0 && !paid;
+    const payStatus = paid ? 'Paid' : (partPaid ? 'Partially Paid' : 'Unpaid');
+    const payColor  = paid ? '#22C55E' : (partPaid ? '#F59E0B' : '#EF4444');
+
+    document.getElementById('invoice-modal-body').innerHTML = `
+      <!-- Invoice preview -->
+      <div id="invoice-preview" style="font-family:Inter,sans-serif;padding:4px 0;">
+        <!-- Company header -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:1px solid var(--border);margin-bottom:20px;">
+          <div>
+            <div style="font-size:22px;font-weight:800;color:var(--primary);letter-spacing:-.5px;">TurboFix</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:2px;">Professional Mobile Repair</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Hitech City, Hyderabad — 500081</div>
+            <div style="font-size:12px;color:var(--text-muted);">support@turbofix.in</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text-muted);margin-bottom:4px;">Invoice</div>
+            <div style="font-size:16px;font-weight:700;color:var(--text);font-family:monospace;">#${esc(o.order_id)}</div>
+            <div style="font-size:12px;color:var(--text-muted);margin-top:6px;">Date: ${formatDate(o.updated_at||o.created_at)}</div>
+            <div style="margin-top:8px;">
+              <span style="padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600;background:${paid?'rgba(34,197,94,.12)':partPaid?'rgba(245,158,11,.12)':'rgba(239,68,68,.1)'};color:${payColor};border:1px solid ${payColor}40;">${payStatus}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer & Device -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="modal-info-grid">
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px;">Bill To</div>
+            <div style="font-weight:600;color:var(--text);font-size:14px;">${esc(o.customer_name||'—')}</div>
+            <div style="font-size:13px;color:var(--text-muted);margin-top:3px;">${esc(o.customer_phone||'—')}</div>
+            ${o.customer_email ? `<div style="font-size:13px;color:var(--text-muted);">${esc(o.customer_email)}</div>` : ''}
+            ${o.customer_address ? `<div style="font-size:12px;color:var(--text-muted);margin-top:4px;">${esc(o.customer_address)}</div>` : ''}
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px;">Device</div>
+            <div style="font-weight:600;color:var(--text);font-size:14px;">${esc(o.device_brand)} ${esc(o.device_model)}</div>
+            ${o.technician_name ? `<div style="font-size:13px;color:var(--text-muted);margin-top:4px;">Technician: ${esc(o.technician_name)}</div>` : ''}
+            ${o.warranty_months ? `<div style="font-size:12px;color:var(--text-muted);">Warranty: ${o.warranty_months} month(s)</div>` : ''}
+            ${o.scheduled_date  ? `<div style="font-size:12px;color:var(--text-muted);">Booked: ${formatDate(o.scheduled_date)} ${o.scheduled_time||''}</div>` : ''}
+          </div>
+        </div>
+
+        <!-- Services table -->
+        <div style="margin-bottom:20px;">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:10px;">Services Performed</div>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:1px solid var(--border);">
+                <th style="text-align:left;font-size:11px;color:var(--text-muted);padding:8px 0;font-weight:600;">Description</th>
+                <th style="text-align:right;font-size:11px;color:var(--text-muted);padding:8px 0;font-weight:600;">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${services.map((s, i) => `
+                <tr style="border-bottom:1px solid var(--border);">
+                  <td style="padding:10px 0;font-size:13px;color:var(--text);">${esc(String(s))}</td>
+                  <td style="padding:10px 0;font-size:13px;color:var(--text);text-align:right;">
+                    ${i === 0 && cost > 0 ? formatCurrency(cost) : (services.length === 1 ? formatCurrency(cost) : '—')}
+                  </td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td style="padding:12px 0 4px;font-weight:600;font-size:13px;color:var(--text);">Total</td>
+                <td style="padding:12px 0 4px;font-weight:700;font-size:15px;color:var(--text);text-align:right;">${formatCurrency(cost)}</td>
+              </tr>
+              ${amtPaid > 0 ? `
+              <tr>
+                <td style="padding:2px 0;font-size:13px;color:#22C55E;">Amount Paid</td>
+                <td style="padding:2px 0;font-size:13px;color:#22C55E;text-align:right;">${formatCurrency(amtPaid)}</td>
+              </tr>` : ''}
+              ${balance > 0 ? `
+              <tr>
+                <td style="padding:2px 0;font-size:13px;color:#EF4444;">Balance Due</td>
+                <td style="padding:2px 0;font-size:13px;color:#EF4444;text-align:right;">${formatCurrency(balance)}</td>
+              </tr>` : ''}
+            </tfoot>
+          </table>
+        </div>
+
+        ${o.issue_description ? `
+        <div style="margin-bottom:16px;padding:12px;border-radius:8px;background:var(--surface);border:1px solid var(--border);">
+          <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:var(--text-muted);margin-bottom:6px;">Issue Notes</div>
+          <div style="font-size:13px;color:var(--text-dim);">${esc(o.issue_description)}</div>
+        </div>` : ''}
+
+        <!-- Footer -->
+        <div style="text-align:center;padding-top:16px;border-top:1px solid var(--border);font-size:11px;color:var(--text-muted);">
+          Thank you for choosing TurboFix · 6-month warranty on all repairs · support@turbofix.in
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Quick download without modal ───────────────────────────────────────────
+  async function quickDownloadInvoice(orderId) {
+    showToast('Fetching order…', 'info', 1500);
+    const r = await apiCall(`/orders/${orderId}`);
+    if (!r || !r.ok) { showToast('Failed to load order', 'error'); return; }
+    currentInvoiceData = r.data.data;
+    downloadPDF();
+  }
+
+  // ── jsPDF invoice generation ───────────────────────────────────────────────
+  function downloadPDF() {
+    if (!currentInvoiceData) { showToast('No invoice data', 'error'); return; }
+    const o = currentInvoiceData;
+
+    if (typeof window.jspdf === 'undefined') {
+      showToast('PDF library not loaded. Please refresh the page.', 'error');
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+
+    const W   = 210;
+    const MAR = 18;
+    let   Y   = MAR;
+
+    const services = Array.isArray(o.services) ? o.services : tryParseJSON(o.services, []);
+    const cost      = Number(o.actual_cost || o.estimated_cost || 0);
+    const amtPaid   = Number(o.amount_paid || 0);
+    const balance   = Math.max(0, cost - amtPaid);
+    const paid      = amtPaid >= cost && cost > 0;
+    const partPaid  = amtPaid > 0 && !paid;
+    const payStatus = paid ? 'PAID' : (partPaid ? 'PARTIALLY PAID' : 'UNPAID');
+
+    // ── Brand header ──────────────────────────────────────────────────────────
+    doc.setFillColor(2, 4, 15);
+    doc.rect(0, 0, W, 36, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(20);
+    doc.setTextColor(0, 170, 255);
+    doc.text('TurboFix', MAR, 16);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(160, 160, 180);
+    doc.text('Professional Mobile Repair', MAR, 22);
+    doc.text('Hitech City, Hyderabad — 500081  |  support@turbofix.in', MAR, 27);
+
+    // Invoice badge (right side)
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(200, 200, 220);
+    doc.text('INVOICE', W - MAR, 14, { align: 'right' });
+    doc.setFontSize(13);
+    doc.setTextColor(255, 255, 255);
+    doc.text(`#${o.order_id}`, W - MAR, 21, { align: 'right' });
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(160, 160, 180);
+    doc.text(formatDate(o.updated_at || o.created_at), W - MAR, 27, { align: 'right' });
+
+    Y = 44;
+
+    // ── Status stamp ──────────────────────────────────────────────────────────
+    const stampColor = paid ? [34, 197, 94] : (partPaid ? [245, 158, 11] : [239, 68, 68]);
+    doc.setDrawColor(...stampColor);
+    doc.setFillColor(stampColor[0], stampColor[1], stampColor[2], 0.12);
+    doc.roundedRect(W - MAR - 28, Y - 5, 28, 8, 2, 2, 'FD');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7.5);
+    doc.setTextColor(...stampColor);
+    doc.text(payStatus, W - MAR - 14, Y + 0.5, { align: 'center' });
+
+    // ── Section: Bill To + Device ─────────────────────────────────────────────
+    const colMid = W / 2 + 2;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 110, 130);
+    doc.text('BILL TO', MAR, Y);
+    doc.text('DEVICE', colMid, Y);
+    Y += 5;
+
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(11);
+    doc.setTextColor(230, 235, 245);
+    doc.text(o.customer_name || '—', MAR, Y);
+    doc.text(`${o.device_brand || ''} ${o.device_model || ''}`.trim(), colMid, Y);
+    Y += 5;
+
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9);
+    doc.setTextColor(160, 165, 180);
+    doc.text(o.customer_phone || '—', MAR, Y);
+    if (o.technician_name) doc.text(`Tech: ${o.technician_name}`, colMid, Y);
+    Y += 4;
+
+    if (o.customer_email) { doc.text(o.customer_email, MAR, Y); }
+    if (o.warranty_months) doc.text(`Warranty: ${o.warranty_months} month(s)`, colMid, Y);
+    Y += 4;
+
+    if (o.customer_address) {
+      const addrLines = doc.splitTextToSize(o.customer_address, colMid - MAR - 10);
+      doc.text(addrLines, MAR, Y);
+    }
+    if (o.scheduled_date) doc.text(`Booked: ${formatDate(o.scheduled_date)}`, colMid, Y);
+    Y += 8;
+
+    // ── Divider ────────────────────────────────────────────────────────────────
+    doc.setDrawColor(40, 50, 70);
+    doc.line(MAR, Y, W - MAR, Y);
+    Y += 6;
+
+    // ── Services table ─────────────────────────────────────────────────────────
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 110, 130);
+    doc.text('SERVICES PERFORMED', MAR, Y);
+    doc.text('AMOUNT', W - MAR, Y, { align: 'right' });
+    Y += 2;
+    doc.setDrawColor(40, 50, 70);
+    doc.line(MAR, Y, W - MAR, Y);
+    Y += 5;
+
+    services.forEach((svc, idx) => {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(10);
+      doc.setTextColor(210, 215, 230);
+      const svcLines = doc.splitTextToSize(String(svc), W - MAR * 2 - 30);
+      doc.text(svcLines, MAR, Y);
+      if (idx === 0 || services.length === 1) {
+        doc.setFont('helvetica', 'bold');
+        doc.text(cost > 0 ? `Rs. ${Number(cost).toLocaleString('en-IN')}` : '—', W - MAR, Y, { align: 'right' });
+      }
+      Y += svcLines.length * 5 + 2;
+      doc.setDrawColor(30, 38, 55);
+      doc.line(MAR, Y, W - MAR, Y);
+      Y += 4;
+    });
+
+    // ── Totals ─────────────────────────────────────────────────────────────────
+    Y += 2;
+    const totals = [
+      { label: 'Sub-total', amount: cost, bold: false },
+      ...(amtPaid > 0 ? [{ label: 'Amount Paid', amount: amtPaid, bold: false, color: [34, 197, 94] }] : []),
+      ...(balance > 0 ? [{ label: 'Balance Due', amount: balance, bold: false, color: [239, 68, 68] }] : []),
+      { label: 'TOTAL', amount: cost, bold: true },
+    ];
+
+    totals.forEach(row => {
+      doc.setFont('helvetica', row.bold ? 'bold' : 'normal');
+      doc.setFontSize(row.bold ? 11 : 9);
+      const color = row.color || (row.bold ? [230, 235, 245] : [160, 165, 180]);
+      doc.setTextColor(...color);
+      doc.text(row.label, W - MAR - 40, Y);
+      doc.text(`Rs. ${Number(row.amount).toLocaleString('en-IN')}`, W - MAR, Y, { align: 'right' });
+      Y += row.bold ? 6 : 5;
+    });
+
+    // ── Issue notes ────────────────────────────────────────────────────────────
+    if (o.issue_description) {
+      Y += 4;
+      doc.setDrawColor(40, 50, 70);
+      doc.line(MAR, Y, W - MAR, Y);
+      Y += 5;
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(8);
+      doc.setTextColor(100, 110, 130);
+      doc.text('NOTES', MAR, Y);
+      Y += 4;
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(160, 165, 180);
+      const noteLines = doc.splitTextToSize(o.issue_description, W - MAR * 2);
+      doc.text(noteLines, MAR, Y);
+      Y += noteLines.length * 4 + 4;
+    }
+
+    // ── Footer ─────────────────────────────────────────────────────────────────
+    const pageH = 297;
+    doc.setDrawColor(40, 50, 70);
+    doc.line(MAR, pageH - 20, W - MAR, pageH - 20);
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(8);
+    doc.setTextColor(100, 110, 130);
+    doc.text('Thank you for choosing TurboFix  ·  6-month warranty on all repairs  ·  support@turbofix.in', W / 2, pageH - 14, { align: 'center' });
+    doc.text('www.turbofix.in', W / 2, pageH - 9, { align: 'center' });
+
+    doc.save(`TurboFix-Invoice-${o.order_id}.pdf`);
+    showToast('Invoice downloaded!', 'success');
+  }
+
+  // ── CSV export ─────────────────────────────────────────────────────────────
+  async function exportCSV() {
+    showToast('Preparing CSV…', 'info', 1500);
+    const params = new URLSearchParams({ status: 'delivered', limit: 1000, page: 1, ...(state.search && { search: state.search }) });
+    const r = await apiCall(`/orders?${params}`);
+    if (!r || !r.ok) { showToast('Export failed', 'error'); return; }
+
+    const rows = r.data.data;
+    const headers = ['Order ID','Customer','Phone','Email','Device Brand','Device Model','Services','Cost','Paid','Balance','Technician','Completed Date'];
+    const csvRows = rows.map(o => {
+      const services = Array.isArray(o.services) ? o.services : tryParseJSON(o.services, []);
+      const cost     = Number(o.actual_cost || o.estimated_cost || 0);
+      const paid     = Number(o.amount_paid || 0);
+      return [
+        o.order_id, o.customer_name, o.customer_phone, o.customer_email,
+        o.device_brand, o.device_model, services.join('; '),
+        cost, paid, Math.max(0, cost - paid),
+        o.technician_name || '',
+        formatDate(o.updated_at || o.created_at),
+      ].map(v => `"${String(v || '').replace(/"/g,'""')}"`).join(',');
+    });
+
+    const blob = new Blob([[headers.join(','), ...csvRows].join('\n')], { type: 'text/csv' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `TurboFix-WorkDone-${new Date().toISOString().slice(0,10)}.csv`;
+    a.click(); URL.revokeObjectURL(url);
+    showToast(`Exported ${rows.length} records`, 'success');
+  }
+
+  // Init
+  loadWorkDone();
+</script>
+</body>
+</html>

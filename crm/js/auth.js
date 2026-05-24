@@ -44,7 +44,7 @@ function renderUserInfo(user) {
 function logout(expired = false) {
   localStorage.removeItem('crm_token');
   localStorage.removeItem('crm_user');
-  const redirect = '/crm/login.html' + (expired ? '?session=expired' : '');
+  const redirect = './login.html' + (expired ? '?session=expired' : '');
   window.location.href = redirect;
 }
 

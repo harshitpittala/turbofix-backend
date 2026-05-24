@@ -34,7 +34,10 @@ const allowedOrigins = [
   'https://turbofix.in',
   'https://www.turbofix.in',
   'https://crm.turbofix.in',
-  // Netlify preview deploys
+  // Netlify deployments
+  'https://turbofix-mobiles.netlify.app',
+  'https://crm-turbofix.netlify.app',
+  // Environment variables
   process.env.FRONTEND_URL,
   process.env.CRM_URL,
   // Local development

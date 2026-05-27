@@ -20,7 +20,7 @@ async function apiCall(endpoint, options = {}) {
   if (resp.status === 401) {
     localStorage.removeItem('crm_token');
     localStorage.removeItem('crm_user');
-    window.location.href = '/crm/login.html';
+    window.location.href = '/login.html';
     return null;
   }
 
@@ -144,12 +144,28 @@ function initSidebar() {
   const sidebar = document.getElementById('sidebar');
   if (!toggle || !sidebar) return;
 
-  toggle.addEventListener('click', () => sidebar.classList.toggle('open'));
-  document.addEventListener('click', (e) => {
-    if (!sidebar.contains(e.target) && !toggle.contains(e.target)) {
-      sidebar.classList.remove('open');
-    }
+  // Insert backdrop element right after sidebar if not already present
+  let backdrop = document.getElementById('sidebar-backdrop');
+  if (!backdrop) {
+    backdrop = document.createElement('div');
+    backdrop.id = 'sidebar-backdrop';
+    backdrop.className = 'sidebar-backdrop';
+    sidebar.insertAdjacentElement('afterend', backdrop);
+  }
+
+  const close = () => {
+    sidebar.classList.remove('open');
+    backdrop.style.display = 'none';
+  };
+  const open = () => {
+    sidebar.classList.add('open');
+    backdrop.style.display = window.innerWidth <= 900 ? 'block' : 'none';
+  };
+
+  toggle.addEventListener('click', () => {
+    sidebar.classList.contains('open') ? close() : open();
   });
+  backdrop.addEventListener('click', close);
 }
 
 // ── Mark active nav ───────────────────────────────────────────────────────────

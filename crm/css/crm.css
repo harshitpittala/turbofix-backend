@@ -602,6 +602,40 @@ select.form-control { appearance: none; background-image: url("data:image/svg+xm
   .modal-overlay { align-items: flex-end; padding: 0; }
 }
 
+/* ── Sidebar mobile backdrop ──────────────────────────────── */
+.sidebar-backdrop {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.55);
+  z-index: 99;
+  backdrop-filter: blur(2px);
+}
+@media (max-width: 900px) {
+  .sidebar.open + .sidebar-backdrop { display: block; }
+}
+
+/* ── Extra mobile overrides ───────────────────────────────── */
+@media (max-width: 900px) {
+  .toolbar { gap: 8px; }
+  .toolbar .form-control { width: 100% !important; }
+  .toolbar .search-box { width: 100%; min-width: 0; }
+  .header-title { font-size: 15px; }
+  .btn-sm { padding: 5px 10px; font-size: 11px; }
+  .modal-footer { flex-wrap: wrap; gap: 8px; }
+  .modal-footer .btn { flex: 1; justify-content: center; }
+}
+
+@media (max-width: 600px) {
+  .table-wrapper { border-radius: var(--radius-sm); font-size: 12px; }
+  th, td { padding: 10px 10px; }
+  .stats-grid { gap: 12px; }
+  .stat-card { padding: 16px; }
+  .card { padding: 16px; }
+  .card-sm { padding: 12px; }
+  .toolbar { flex-direction: column; align-items: stretch; }
+  .login-box { padding: 28px 20px; margin: 16px; }
+}
+
 /* ── Utility ──────────────────────────────────────────────── */
 .text-muted { color: var(--text-muted); }
 .text-success { color: var(--success); }

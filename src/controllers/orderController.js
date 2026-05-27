@@ -5,6 +5,7 @@
 const pool = require('../config/database');
 const path = require('path');
 const fs   = require('fs');
+const { sendBookingConfirmation } = require('../services/emailService');
 
 const generateOrderId = () => {
   const rand = Math.floor(100000 + Math.random() * 900000);
@@ -102,6 +103,21 @@ const createOrder = async (req, res, next) => {
     );
 
     await client.query('COMMIT');
+
+    // Send confirmation email (non-blocking — don't fail the request if email fails)
+    if (customer_email) {
+      sendBookingConfirmation({
+        orderId,
+        customerName:  customer_name,
+        customerEmail: customer_email,
+        deviceBrand:   device_brand,
+        deviceModel:   device_model,
+        services:      servicesArr,
+        pickupAddress: pickup_address || customer_address,
+        scheduledDate: scheduled_date,
+        scheduledTime: scheduled_time,
+      }).catch(() => {});
+    }
 
     res.status(201).json({
       success: true,
@@ -272,8 +288,9 @@ const updateOrderStatus = async (req, res, next) => {
 
     const order = rows[0];
     const allowed = VALID_TRANSITIONS[order.status] || [];
+    const isAdmin = req.user.type === 'admin' || req.user.role === 'admin' || req.user.role === 'super_admin';
 
-    if (!allowed.includes(status)) {
+    if (!isAdmin && !allowed.includes(status)) {
       return res.status(400).json({
         success: false,
         message: `Cannot transition from '${order.status}' to '${status}'`,

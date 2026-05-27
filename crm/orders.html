@@ -419,11 +419,13 @@
     await loadTechs();
     document.getElementById('status-order-id').value = dbId;
 
-    const allowed = CRM.STATUS_TRANSITIONS[currentStatus] || [];
     const statusSel = document.getElementById('new-status-select');
-    statusSel.innerHTML = allowed.length
-      ? allowed.map(s => `<option value="${s}">${CRM.STATUS_LABELS[s]}</option>`).join('')
-      : `<option value="">No transitions available</option>`;
+    // Show all statuses so admin can jump to any stage directly
+    const allStatuses = Object.entries(CRM.STATUS_LABELS)
+      .filter(([s]) => s !== currentStatus)
+      .map(([s, label]) => `<option value="${s}">${label}</option>`)
+      .join('');
+    statusSel.innerHTML = allStatuses || `<option value="">No other statuses</option>`;
 
     const techSel = document.getElementById('tech-assign-select');
     techSel.innerHTML = `<option value="">Unassigned</option>` +

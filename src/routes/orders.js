@@ -10,6 +10,7 @@ const {
   createOrder, getOrders, getOrderById, updateOrderStatus,
   updateOrder, deleteOrderImage, addOrderImages, trackOrder, exportOrders,
 } = require('../controllers/orderController');
+const { sendBookingConfirmation } = require('../services/emailService');
 
 const { authenticate, authorizeAdmin, authorizeStaff } = require('../middleware/auth');
 const { bookingLimiter } = require('../middleware/rateLimiter');
@@ -20,6 +21,28 @@ const upload    = require('../config/multer');
 
 // GET /api/orders/track/:orderId  — customer order tracking
 router.get('/track/:orderId', trackOrder);
+
+// POST /api/orders/test-email  — admin-only SMTP test (no DB write)
+router.post('/test-email', authenticate, authorizeAdmin, async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ success: false, message: 'email required in body' });
+  try {
+    await sendBookingConfirmation({
+      orderId:       'TFX-TEST01',
+      customerName:  'Test User',
+      customerEmail: email,
+      deviceBrand:   'Samsung',
+      deviceModel:   'Galaxy S24',
+      services:      ['Screen Replacement'],
+      pickupAddress: '11-1-441, Aghapura, Nampally, Hyderabad',
+      scheduledDate: new Date().toISOString().slice(0, 10),
+      scheduledTime: '10:00 AM – 12:00 PM',
+    });
+    res.json({ success: true, message: `Test email sent to ${email}` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
 
 // POST /api/orders  — customer creates order (booking form)
 const createRules = [

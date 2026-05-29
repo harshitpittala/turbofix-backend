@@ -9,9 +9,20 @@ const createPayment = async (req, res, next) => {
   try {
     const { order_id, amount, method, status = 'paid', transaction_id, notes } = req.body;
 
-    const { rows: orders } = await pool.query(
-      'SELECT id FROM repair_orders WHERE id = $1 OR order_id = $2', [order_id, order_id]
-    );
+    // Resolve order: accept either "TFX-528757" (order_id string) or a raw integer (db id).
+    // IMPORTANT: never cast a TFX- string to ::int — Postgres will throw.
+    const isNumericId = /^\d+$/.test(String(order_id));
+
+    const { rows: orders } = isNumericId
+      ? await pool.query(
+          'SELECT id FROM repair_orders WHERE order_id = $1 OR id = $2',
+          [order_id, parseInt(order_id, 10)]
+        )
+      : await pool.query(
+          'SELECT id FROM repair_orders WHERE order_id = $1',
+          [order_id]
+        );
+
     if (!orders.length) return res.status(404).json({ success: false, message: 'Order not found' });
     const dbOrderId = orders[0].id;
 

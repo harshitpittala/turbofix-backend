@@ -319,6 +319,19 @@
   function applyFilter(k, v)   { state[k] = v; state.page = 1; loadWorkDone(); }
   function debounceSearch(val) { clearTimeout(searchTimer); searchTimer = setTimeout(() => applyFilter('search', val), 350); }
 
+  // ── Shared helper: compute amount_paid from the payments sub-array ──────────
+  // The single-order API endpoint returns a `payments` array but the `amount_paid`
+  // field on the order object itself may be stale/0. Always recompute from the array.
+  function resolveAmountPaid(o) {
+    const paymentsArr = Array.isArray(o.payments) ? o.payments : [];
+    const fromArr = paymentsArr
+      .filter(p => p.status === 'paid' || p.status === 'partial')
+      .reduce((sum, p) => sum + Number(p.amount || 0), 0);
+    const result = fromArr || Number(o.amount_paid || 0);
+    console.log(`[invoice] order ${o.order_id} | status: ${o.status} | amount_paid resolved: ${result} | from payments array: ${fromArr} | from order field: ${o.amount_paid}`);
+    return result;
+  }
+
   // ── Invoice modal ──────────────────────────────────────────────────────────
   async function openInvoiceModal(orderId) {
     openModal('invoice-modal');
@@ -333,24 +346,25 @@
       return;
     }
     const o = r.data.data;
-    // Compute amount_paid from payments array (returned by single-order endpoint)
-    const paymentsArr = Array.isArray(o.payments) ? o.payments : [];
-    const computedPaid = paymentsArr
-      .filter(p => p.status === 'paid' || p.status === 'partial')
-      .reduce((sum, p) => sum + Number(p.amount || 0), 0);
-    o.amount_paid = computedPaid || Number(o.amount_paid || 0);
+    o.amount_paid = resolveAmountPaid(o);   // ← always use resolved value
     currentInvoiceData = o;
 
     document.getElementById('inv-modal-sub').textContent = formatDateTime(o.updated_at || o.created_at);
 
     const services = Array.isArray(o.services) ? o.services : tryParseJSON(o.services, []);
-    const cost     = o.actual_cost || o.estimated_cost || 0;
-    const amtPaid  = o.amount_paid || 0;
+    const cost     = Number(o.actual_cost || o.estimated_cost || 0);
+    const amtPaid  = Number(o.amount_paid || 0);
     const balance  = Math.max(0, cost - amtPaid);
-    const paid     = amtPaid >= cost && cost > 0;
-    const partPaid = amtPaid > 0 && !paid;
+
+    // PAID if: payment covers the cost, OR order is delivered/completed with no balance
+    const COMPLETED_STATUSES = ['delivered', 'completed', 'repaired', 'ready'];
+    const paid     = (cost > 0 && amtPaid >= cost) ||
+                     (COMPLETED_STATUSES.includes(o.status) && balance === 0);
+    const partPaid = !paid && amtPaid > 0;
+
     const payStatus = paid ? 'Paid' : (partPaid ? 'Partially Paid' : 'Unpaid');
     const payColor  = paid ? '#22C55E' : (partPaid ? '#F59E0B' : '#EF4444');
+    console.log(`[invoice preview] ${o.order_id} | payStatus: ${payStatus} | cost: ${cost} | amtPaid: ${amtPaid} | status: ${o.status}`);
 
     document.getElementById('invoice-modal-body').innerHTML = `
       <!-- Invoice preview — white background so text is always readable -->
@@ -358,11 +372,24 @@
 
         <!-- Company header -->
         <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:2px solid #e2e8f0;margin-bottom:20px;">
-          <div>
-            <div style="font-size:26px;font-weight:900;color:#0066FF;letter-spacing:-.5px;line-height:1;">TurboFix</div>
-            <div style="font-size:11px;font-weight:600;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.08em;">Professional Mobile Repair</div>
-            <div style="font-size:12px;color:#64748b;margin-top:6px;">11-1-441, Aghapura, Nampally, Hyderabad</div>
-            <div style="font-size:12px;color:#64748b;">📞 +91 86396 05147 &nbsp;|&nbsp; ✉ support@turbofix.in</div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <!-- TurboFix logo mark (inline SVG — works in preview, PDF, and print) -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="52" height="52" style="border-radius:10px;flex-shrink:0;">
+              <defs>
+                <linearGradient id="tfg" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#0066FF"/>
+                  <stop offset="100%" stop-color="#00AAFF"/>
+                </linearGradient>
+              </defs>
+              <rect width="32" height="32" rx="7" fill="url(#tfg)"/>
+              <path d="M18 4 L10 18 H15 L14 28 L22 14 H17 Z" fill="white"/>
+            </svg>
+            <div>
+              <div style="font-size:26px;font-weight:900;color:#0066FF;letter-spacing:-.5px;line-height:1;">TurboFix</div>
+              <div style="font-size:11px;font-weight:600;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.08em;">Professional Mobile Repair</div>
+              <div style="font-size:12px;color:#64748b;margin-top:6px;">11-1-441, Aghapura, Nampally, Hyderabad</div>
+              <div style="font-size:12px;color:#64748b;">📞 +91 86396 05147 &nbsp;|&nbsp; ✉ support@turbofix.in</div>
+            </div>
           </div>
           <div style="text-align:right;">
             <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:4px;">Invoice</div>
@@ -462,7 +489,11 @@
     showToast('Fetching order…', 'info', 1500);
     const r = await apiCall(`/orders/${orderId}`);
     if (!r || !r.ok) { showToast('Failed to load order', 'error'); return; }
-    currentInvoiceData = r.data.data;
+    const o = r.data.data;
+    // CRITICAL: must resolve amount_paid here too — same as openInvoiceModal.
+    // Without this, amount_paid = 0 and the PDF always shows UNPAID.
+    o.amount_paid = resolveAmountPaid(o);
+    currentInvoiceData = o;
     downloadPDF();
   }
 
@@ -485,24 +516,49 @@
 
     const services = Array.isArray(o.services) ? o.services : tryParseJSON(o.services, []);
     const cost      = Number(o.actual_cost || o.estimated_cost || 0);
-    const amtPaid   = Number(o.amount_paid || 0);
+    const amtPaid   = Number(o.amount_paid || 0);   // already resolved by resolveAmountPaid()
     const balance   = Math.max(0, cost - amtPaid);
-    const paid      = amtPaid >= cost && cost > 0;
-    const partPaid  = amtPaid > 0 && !paid;
+
+    // Payment status — mirrors the HTML preview logic exactly
+    const COMPLETED_STATUSES = ['delivered', 'completed', 'repaired', 'ready'];
+    const paid      = (cost > 0 && amtPaid >= cost) ||
+                      (COMPLETED_STATUSES.includes(o.status) && balance === 0);
+    const partPaid  = !paid && amtPaid > 0;
     const payStatus = paid ? 'PAID' : (partPaid ? 'PARTIALLY PAID' : 'UNPAID');
+
+    console.log(`[PDF] ${o.order_id} | payStatus: ${payStatus} | cost: ${cost} | amtPaid: ${amtPaid} | status: ${o.status}`);
 
     // ── Brand header (dark bg) ────────────────────────────────────────────────
     doc.setFillColor(10, 14, 40);
-    doc.rect(0, 0, W, 38, 'F');
+    doc.rect(0, 0, W, 40, 'F');
+
+    // Logo mark — blue rounded rectangle with lightning bolt
+    const LOGO_X = MAR;
+    const LOGO_Y = 5;
+    const LOGO_S = 14;   // 14 x 14 mm square
+    doc.setFillColor(0, 102, 255);
+    doc.roundedRect(LOGO_X, LOGO_Y, LOGO_S, LOGO_S, 2.5, 2.5, 'F');
+    // Lightning bolt path (SVG viewBox 32x32 → scaled to 14mm)
+    const LS = LOGO_S / 32;  // scale: 14/32 ≈ 0.4375
+    doc.setFillColor(255, 255, 255);
+    doc.lines(
+      [[-3.5, 6.125], [2.1875, 0], [-0.4375, 4.375], [3.5, -6.125], [-2.1875, 0]],
+      LOGO_X + 18 * LS,   // start x (SVG point 18,4 scaled)
+      LOGO_Y + 4 * LS,    // start y
+      [1, 1], 'F', true
+    );
+
+    // TurboFix text — starts after logo (MAR + logo width + 4mm gap)
+    const TX = MAR + LOGO_S + 4;
     doc.setFont('helvetica', 'bold');
-    doc.setFontSize(22);
+    doc.setFontSize(20);
     doc.setTextColor(0, 150, 255);
-    doc.text('TurboFix', MAR, 17);
+    doc.text('TurboFix', TX, 15);
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(180, 190, 210);
-    doc.text('Professional Mobile Repair', MAR, 24);
-    doc.text('11-1-441, Aghapura, Nampally, Hyderabad  |  support@turbofix.in  |  +91 86396 05147', MAR, 30);
+    doc.text('Professional Mobile Repair', TX, 22);
+    doc.text('11-1-441, Aghapura, Nampally, Hyderabad  |  support@turbofix.in  |  +91 86396 05147', TX, 29);
 
     // Invoice badge (right side of header)
     doc.setFont('helvetica', 'bold');
@@ -517,7 +573,7 @@
     doc.setTextColor(160, 180, 210);
     doc.text(formatDate(o.updated_at || o.created_at), W - MAR, 30, { align: 'right' });
 
-    Y = 46;
+    Y = 48;  // slightly more space after taller header
 
     // ── Status stamp ──────────────────────────────────────────────────────────
     const stampColor = paid ? [22, 163, 74] : (partPaid ? [180, 83, 9] : [185, 28, 28]);
@@ -678,6 +734,7 @@
     doc.text('This is a computer generated invoice and does not require a signature/stamp.', W / 2, pageH - 6, { align: 'center' });
 
     doc.save(`TurboFix-Invoice-${o.order_id}.pdf`);
+    console.log(`[PDF] Generated: TurboFix-Invoice-${o.order_id}.pdf | status: ${payStatus}`);
     showToast('Invoice downloaded!', 'success');
   }
 

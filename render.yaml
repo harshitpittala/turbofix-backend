@@ -38,16 +38,15 @@ services:
         value: 100
       - key: MAX_FILE_SIZE_MB
         value: 10
-      # ── Email / SMTP ──────────────────────────────────────────
-      - key: SMTP_HOST
-        value: smtp-relay.brevo.com
-      - key: SMTP_PORT
-        value: 587
-      - key: SMTP_SECURE
-        value: false
-      - key: SMTP_USER
-        sync: false   # set in Render dashboard: support@turbofix.in
-      - key: SMTP_PASS
-        sync: false   # set in Render dashboard: your Brevo SMTP key
-      - key: SMTP_FROM
-        value: "TurboFix <support@turbofix.in>"
+      # ── Email / Resend HTTP API (replaces Nodemailer+Brevo SMTP) ─
+      # No SMTP ports needed — Resend uses HTTPS (port 443) only.
+      # Get your API key from: https://resend.com/api-keys
+      - key: RESEND_API_KEY
+        sync: false   # set in Render dashboard — never commit this value
+      # FROM_EMAIL: use onboarding@resend.dev until turbofix.in is verified in Resend.
+      # After domain verification → change to: TurboFix <noreply@turbofix.in>
+      - key: FROM_EMAIL
+        value: "TurboFix <onboarding@resend.dev>"
+      # ADMIN_EMAIL: where new-booking notifications are delivered
+      - key: ADMIN_EMAIL
+        value: support@turbofix.in

@@ -5,7 +5,7 @@
 const pool = require('../config/database');
 const path = require('path');
 const fs   = require('fs');
-const { sendBookingConfirmation } = require('../services/emailService');
+const { sendBookingConfirmation, sendAdminNotification } = require('../services/emailService');
 
 const generateOrderId = () => {
   const rand = Math.floor(100000 + Math.random() * 900000);
@@ -104,20 +104,28 @@ const createOrder = async (req, res, next) => {
 
     await client.query('COMMIT');
 
-    // Send confirmation email (non-blocking — don't fail the request if email fails)
+    // Fire both emails non-blocking — booking is already saved, emails are best-effort
+    const emailPayload = {
+      orderId,
+      customerName:  customer_name,
+      customerPhone: customer_phone,
+      customerEmail: customer_email,
+      deviceBrand:   device_brand,
+      deviceModel:   device_model,
+      services:      servicesArr,
+      pickupAddress: pickup_address || customer_address,
+      scheduledDate: scheduled_date,
+      scheduledTime: scheduled_time,
+      serviceType:   service_type,
+    };
+
+    // 1. Customer confirmation
     if (customer_email) {
-      sendBookingConfirmation({
-        orderId,
-        customerName:  customer_name,
-        customerEmail: customer_email,
-        deviceBrand:   device_brand,
-        deviceModel:   device_model,
-        services:      servicesArr,
-        pickupAddress: pickup_address || customer_address,
-        scheduledDate: scheduled_date,
-        scheduledTime: scheduled_time,
-      }).catch(() => {});
+      sendBookingConfirmation(emailPayload).catch(() => {});
     }
+
+    // 2. Admin new-booking notification (always fires)
+    sendAdminNotification(emailPayload).catch(() => {});
 
     res.status(201).json({
       success: true,

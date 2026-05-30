@@ -37,11 +37,15 @@ const createOrder = async (req, res, next) => {
 
     let customerId;
     if (existing.length) {
+      // IMPORTANT: Only increment the order counter.
+      // Do NOT overwrite name / email / address — doing so would silently
+      // corrupt every previous order for this customer because all orders
+      // JOIN on the shared customers row.  Profile edits must go through
+      // the dedicated Customer Management endpoint (PUT /api/customers/:id).
       customerId = existing[0].id;
       await client.query(
-        `UPDATE customers SET name = $1, email = $2, address = $3,
-         total_orders = total_orders + 1 WHERE id = $4`,
-        [customer_name, customer_email || null, customer_address || null, customerId]
+        `UPDATE customers SET total_orders = total_orders + 1 WHERE id = $1`,
+        [customerId]
       );
     } else {
       const { rows: [{ id }] } = await client.query(

@@ -681,4 +681,73 @@ async function sendAdminNotification({
   }
 }
 
-module.exports = { sendBookingConfirmation, sendAdminNotification };
+// ── 3. Contact form message → admin inbox ────────────────────────────────────
+/**
+ * Sends a "New Contact Message" notification to ADMIN_EMAIL whenever a visitor
+ * submits the /contact page form. Fire-and-forget from the route handler.
+ */
+async function sendContactMessage({ name, email, phone, subject, message }) {
+  const resend = getResend();
+  if (!resend) return { skipped: true };
+
+  const safeSubject = subject && subject.trim() ? subject.trim() : 'New website enquiry';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8" /><title>New Contact Message — TurboFix</title></head>
+<body style="margin:0;padding:0;background:#030712;font-family:'Inter',Arial,Helvetica,sans-serif;">
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#030712;">
+<tr><td align="center" style="padding:24px 16px;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0"
+    style="width:100%;max-width:560px;background:#080d1a;border-radius:16px;overflow:hidden;border:1px solid rgba(0,170,255,0.15);">
+    <tr><td style="height:2px;background:linear-gradient(90deg,transparent,#0066FF,#00AAFF,transparent);font-size:0;">&nbsp;</td></tr>
+    <tr>
+      <td style="padding:24px 28px 20px;border-bottom:1px solid rgba(255,255,255,0.05);">
+        <span style="font-size:18px;font-weight:900;color:#0066FF;font-family:Arial,sans-serif;">Turbo<span style="color:#00AAFF;">Fix</span></span>
+        <span style="font-size:11px;color:#4a5568;margin-left:8px;">Website Contact Form</span>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:24px 28px;">
+        <p style="margin:0 0 18px;font-size:15px;font-weight:700;color:#ffffff;">${safeSubject}</p>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+          style="background:rgba(0,170,255,0.04);border:1px solid rgba(0,170,255,0.12);border-radius:12px;margin-bottom:16px;">
+          <tr><td style="padding:16px 18px;">
+            <p style="margin:0 0 6px;font-size:13px;color:#e2e8f0;">👤 <strong>${name}</strong></p>
+            <p style="margin:0 0 6px;font-size:13px;color:#9ca3af;">📧 ${email}</p>
+            <p style="margin:0;font-size:13px;color:#9ca3af;">📞 ${phone || 'Not provided'}</p>
+          </td></tr>
+        </table>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+          style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:12px;">
+          <tr><td style="padding:16px 18px;">
+            <p style="margin:0 0 8px;font-size:10px;font-weight:700;color:#9ca3af;text-transform:uppercase;letter-spacing:0.1em;">Message</p>
+            <p style="margin:0;font-size:13px;color:#e2e8f0;white-space:pre-wrap;">${message}</p>
+          </td></tr>
+        </table>
+      </td>
+    </tr>
+    <tr><td style="height:2px;background:linear-gradient(90deg,transparent,rgba(0,102,255,0.4),transparent);font-size:0;">&nbsp;</td></tr>
+  </table>
+</td></tr>
+</table>
+</body>
+</html>`;
+
+  const { data, error } = await resend.emails.send({
+    from:    FROM,
+    to:      ADMIN_EMAIL,
+    replyTo: email,
+    subject: `📩 Contact Form: ${safeSubject} (${name})`,
+    html,
+  });
+
+  if (error) {
+    console.error('❌ [email] Contact message failed:', error);
+    throw new Error('Failed to send message');
+  }
+  console.log(`✅ [email] Contact message sent → ${ADMIN_EMAIL} | from: ${email} | resend_id: ${data?.id}`);
+  return { skipped: false };
+}
+
+module.exports = { sendBookingConfirmation, sendAdminNotification, sendContactMessage };

@@ -27,6 +27,7 @@ const createOrder = async (req, res, next) => {
       customer_name, customer_phone, customer_email, customer_address,
       device_brand, device_model, services, issue_description,
       service_type, pickup_address, scheduled_date, scheduled_time,
+      priority, estimated_cost,
     } = req.body;
 
     // Upsert customer by phone
@@ -74,14 +75,15 @@ const createOrder = async (req, res, next) => {
       `INSERT INTO repair_orders
         (order_id, customer_id, device_brand, device_model, services,
          issue_description, service_type, pickup_address,
-         scheduled_date, scheduled_time)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         scheduled_date, scheduled_time, priority, estimated_cost)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING id`,
       [
         orderId, customerId, device_brand, device_model,
         JSON.stringify(servicesArr), issue_description || null,
         service_type, pickup_address || null,
         scheduled_date || null, scheduled_time || null,
+        priority || 'normal', estimated_cost || null,
       ]
     );
 
@@ -195,7 +197,7 @@ const getOrders = async (req, res, next) => {
          ro.id, ro.order_id, ro.status, ro.priority,
          ro.device_brand, ro.device_model, ro.services,
          ro.service_type, ro.scheduled_date, ro.scheduled_time,
-         ro.estimated_cost, ro.actual_cost, ro.warranty_months,
+         ro.estimated_cost, ro.actual_cost, ro.warranty_months, ro.imei_number,
          ro.created_at, ro.updated_at,
          c.id AS customer_id, c.name AS customer_name, c.phone AS customer_phone,
          c.email AS customer_email,
@@ -289,7 +291,7 @@ const VALID_TRANSITIONS = {
 const updateOrderStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { status, notes, technician_id } = req.body;
+    const { status, notes, technician_id, imei_number, warranty_months } = req.body;
     const { id: userId, type: userType, name: userName } = req.user;
 
     const { rows } = await pool.query(
@@ -318,6 +320,16 @@ const updateOrderStatus = async (req, res, next) => {
       updateParams.push(technician_id || null);
     }
 
+    if (imei_number !== undefined) {
+      updateFields.push(`imei_number = $${updateParams.length + 1}`);
+      updateParams.push(imei_number || null);
+    }
+
+    if (warranty_months !== undefined && warranty_months !== null && warranty_months !== '') {
+      updateFields.push(`warranty_months = $${updateParams.length + 1}`);
+      updateParams.push(parseInt(warranty_months, 10));
+    }
+
     updateParams.push(order.id);
     await pool.query(
       `UPDATE repair_orders SET ${updateFields.join(', ')} WHERE id = $${updateParams.length}`,
@@ -343,7 +355,7 @@ const updateOrder = async (req, res, next) => {
     const { id } = req.params;
     const {
       technician_id, estimated_cost, actual_cost, priority,
-      admin_notes, technician_notes, warranty_months,
+      admin_notes, technician_notes, warranty_months, imei_number,
     } = req.body;
 
     const { rows } = await pool.query(
@@ -361,8 +373,9 @@ const updateOrder = async (req, res, next) => {
          priority         = COALESCE($4, priority),
          admin_notes      = COALESCE($5, admin_notes),
          technician_notes = COALESCE($6, technician_notes),
-         warranty_months  = COALESCE($7, warranty_months)
-       WHERE id = $8`,
+         warranty_months  = COALESCE($7, warranty_months),
+         imei_number      = COALESCE($8, imei_number)
+       WHERE id = $9`,
       [
         technician_id   ?? null,
         estimated_cost  ?? null,
@@ -371,6 +384,7 @@ const updateOrder = async (req, res, next) => {
         admin_notes     ?? null,
         technician_notes ?? null,
         warranty_months ?? null,
+        imei_number     ?? null,
         dbId,
       ]
     );

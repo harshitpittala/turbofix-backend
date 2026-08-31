@@ -71,6 +71,9 @@ router.post('/', bookingLimiter, upload.array('images', 5), createRules, validat
 
 // ── Admin endpoints ───────────────────────────────────────────────────────────
 
+// POST /api/orders/manual — admin creates an order directly from the CRM
+router.post('/manual', authenticate, authorizeAdmin, createRules, validate, createOrder);
+
 // GET /api/orders/export
 router.get('/export', authenticate, authorizeAdmin, exportOrders);
 

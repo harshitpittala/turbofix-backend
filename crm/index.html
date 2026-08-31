@@ -115,7 +115,7 @@
         </div>
       </div>
       <div class="header-right">
-        <button class="btn btn-primary btn-sm" onclick="window.location='./orders.html'">
+        <button class="btn btn-primary btn-sm" onclick="openAddOrderModal()">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
           New Order
         </button>
@@ -207,7 +207,112 @@
   </div>
 </div>
 
+<!-- Add Order modal -->
+<div class="modal-overlay" id="add-order-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title">Add Order</div>
+      <button class="modal-close" onclick="closeModal('add-order-modal')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px;">Customer</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Name *</label>
+          <input type="text" class="form-control" id="ao-name" placeholder="Customer name" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Phone *</label>
+          <input type="text" class="form-control" id="ao-phone" placeholder="10-digit mobile number" />
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" class="form-control" id="ao-email" placeholder="Optional" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Address</label>
+          <input type="text" class="form-control" id="ao-address" placeholder="Optional" />
+        </div>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 10px;">Device</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Brand *</label>
+          <select class="form-control" id="ao-brand" onchange="onAddOrderBrandChange()">
+            <option value="">Select brand…</option>
+          </select>
+          <input type="text" class="form-control" id="ao-brand-other" placeholder="Enter brand name" style="margin-top:8px;display:none;" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Model *</label>
+          <select class="form-control" id="ao-model" style="display:none;" onchange="onAddOrderModelChange()"></select>
+          <input type="text" class="form-control" id="ao-model-other" placeholder="Select a brand first" disabled />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Services *</label>
+        <div id="ao-services" style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;">
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Screen Replacement" /> Screen Replacement</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Battery Replacement" /> Battery Replacement</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Camera Module" /> Camera Module</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Water Damage" /> Water Damage</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Speaker / Mic" /> Speaker / Mic</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Charging Port" /> Charging Port</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Back Panel" /> Back Panel</label>
+          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Software / Data" /> Software / Data</label>
+        </div>
+        <input type="text" class="form-control" id="ao-service-other" placeholder="Other service (optional)" style="margin-top:8px;" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Issue Description</label>
+        <textarea class="form-control" id="ao-issue" rows="2" placeholder="Optional notes on the issue"></textarea>
+      </div>
+
+      <div style="font-size:11px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:.06em;margin:16px 0 10px;">Order Details</div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Service Type</label>
+          <select class="form-control" id="ao-service-type">
+            <option value="walk-in">Walk-in</option>
+            <option value="pickup">Pickup</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Priority</label>
+          <select class="form-control" id="ao-priority">
+            <option value="normal">Normal</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Scheduled Date</label>
+          <input type="date" class="form-control" id="ao-date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Scheduled Time</label>
+          <input type="text" class="form-control" id="ao-time" placeholder="e.g. 10:00 AM – 12:00 PM" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estimated Cost (₹)</label>
+        <input type="number" class="form-control" id="ao-cost" placeholder="0.00" min="0" step="0.01" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('add-order-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitAddOrder()">Create Order</button>
+    </div>
+  </div>
+</div>
+
 <script src="./js/config.js"></script>
+<script src="./js/brands.js"></script>
 <script src="./js/utils.js"></script>
 <script src="./js/auth.js"></script>
 <script>
@@ -329,6 +434,127 @@
   }
 
   loadDashboard();
+
+  // ── Add Order (opened directly from the Dashboard) ─────────────────────────
+  (function populateAddOrderBrands() {
+    const sel = document.getElementById('ao-brand');
+    if (!sel) return;
+    Object.keys(BRAND_MODELS).forEach(brand => {
+      sel.insertAdjacentHTML('beforeend', `<option value="${esc(brand)}">${esc(brand)}</option>`);
+    });
+    sel.insertAdjacentHTML('beforeend', `<option value="Other">Other</option>`);
+  })();
+
+  function onAddOrderBrandChange() {
+    const brand      = document.getElementById('ao-brand').value;
+    const brandOther = document.getElementById('ao-brand-other');
+    const modelSel    = document.getElementById('ao-model');
+    const modelOther  = document.getElementById('ao-model-other');
+
+    const models = BRAND_MODELS[brand] || [];
+    brandOther.style.display = brand === 'Other' ? '' : 'none';
+
+    if (models.length) {
+      modelSel.innerHTML = `<option value="">Select model…</option>` +
+        models.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('') +
+        `<option value="__other__">Other / not listed</option>`;
+      modelSel.style.display = '';
+      modelOther.style.display = 'none';
+      modelOther.disabled = true;
+      modelOther.value = '';
+    } else {
+      modelSel.style.display = 'none';
+      modelOther.style.display = '';
+      modelOther.disabled = false;
+      modelOther.placeholder = 'Enter model name';
+    }
+  }
+
+  function onAddOrderModelChange() {
+    const modelSel   = document.getElementById('ao-model');
+    const modelOther = document.getElementById('ao-model-other');
+    if (modelSel.value === '__other__') {
+      modelOther.style.display = '';
+      modelOther.disabled = false;
+      modelOther.placeholder = 'Enter model name';
+      modelOther.value = '';
+    } else {
+      modelOther.style.display = 'none';
+      modelOther.disabled = true;
+    }
+  }
+
+  function getAddOrderBrand() {
+    const sel = document.getElementById('ao-brand').value;
+    return sel === 'Other' ? document.getElementById('ao-brand-other').value.trim() : sel;
+  }
+
+  function getAddOrderModel() {
+    const modelSel = document.getElementById('ao-model');
+    if (modelSel.style.display !== 'none' && modelSel.value && modelSel.value !== '__other__') {
+      return modelSel.value;
+    }
+    return document.getElementById('ao-model-other').value.trim();
+  }
+
+  function openAddOrderModal() {
+    ['ao-name','ao-phone','ao-email','ao-address','ao-brand-other','ao-model-other','ao-service-other','ao-issue','ao-date','ao-time','ao-cost']
+      .forEach(id => document.getElementById(id).value = '');
+    document.getElementById('ao-brand').value = '';
+    document.getElementById('ao-brand-other').style.display = 'none';
+    document.getElementById('ao-model').style.display = 'none';
+    document.getElementById('ao-model').innerHTML = '';
+    document.getElementById('ao-model-other').style.display = '';
+    document.getElementById('ao-model-other').disabled = true;
+    document.getElementById('ao-model-other').placeholder = 'Select a brand first';
+    document.getElementById('ao-service-type').value = 'walk-in';
+    document.getElementById('ao-priority').value = 'normal';
+    document.querySelectorAll('#ao-services input[type="checkbox"]').forEach(cb => cb.checked = false);
+    openModal('add-order-modal');
+  }
+
+  async function submitAddOrder() {
+    const name    = document.getElementById('ao-name').value.trim();
+    const phone   = document.getElementById('ao-phone').value.trim();
+    const email   = document.getElementById('ao-email').value.trim();
+    const address = document.getElementById('ao-address').value.trim();
+    const brand   = getAddOrderBrand();
+    const model   = getAddOrderModel();
+    const issue   = document.getElementById('ao-issue').value.trim();
+    const serviceType = document.getElementById('ao-service-type').value;
+    const priority     = document.getElementById('ao-priority').value;
+    const date    = document.getElementById('ao-date').value;
+    const time    = document.getElementById('ao-time').value.trim();
+    const cost    = document.getElementById('ao-cost').value;
+    const otherService = document.getElementById('ao-service-other').value.trim();
+
+    const services = Array.from(document.querySelectorAll('#ao-services input[type="checkbox"]:checked')).map(cb => cb.value);
+    if (otherService) services.push(otherService);
+
+    if (!name)  { showToast('Customer name is required', 'warn'); return; }
+    if (!phone) { showToast('Customer phone is required', 'warn'); return; }
+    if (!brand) { showToast('Device brand is required', 'warn'); return; }
+    if (!model) { showToast('Device model is required', 'warn'); return; }
+    if (!services.length) { showToast('Select at least one service', 'warn'); return; }
+
+    const payload = {
+      customer_name: name, customer_phone: phone,
+      customer_email: email || undefined, customer_address: address || undefined,
+      device_brand: brand, device_model: model,
+      services, issue_description: issue || undefined,
+      service_type: serviceType, pickup_address: address || undefined,
+      scheduled_date: date || undefined, scheduled_time: time || undefined,
+      priority, estimated_cost: cost || undefined,
+    };
+
+    const r = await apiCall('/orders/manual', { method: 'POST', body: JSON.stringify(payload) });
+    if (!r || !r.ok) { showToast(r?.data?.message || 'Failed to create order', 'error'); return; }
+
+    showToast(`Order ${r.data.data.order_id} created`, 'success');
+    closeModal('add-order-modal');
+    loadRecentOrders();
+    loadStats();
+  }
 
   // Responsive charts grid
   const mq = window.matchMedia('(max-width:900px)');

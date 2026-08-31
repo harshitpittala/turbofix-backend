@@ -190,6 +190,47 @@
   </div>
 </div>
 
+<!-- GST choice modal -->
+<div class="modal-overlay" id="gst-choice-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Generate Invoice</div>
+      <button class="modal-close" onclick="closeModal('gst-choice-modal')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">Should this invoice include GST details?</p>
+      <div style="display:flex;gap:12px;">
+        <button class="btn btn-secondary" style="flex:1;" onclick="chooseInvoiceType(false)">Without GST Invoice</button>
+        <button class="btn btn-primary" style="flex:1;" onclick="chooseInvoiceType(true)">With GST Invoice</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- GST details modal -->
+<div class="modal-overlay" id="gst-details-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">GST Details</div>
+      <button class="modal-close" onclick="closeModal('gst-details-modal')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Customer's GST Number *</label>
+        <input type="text" class="form-control" id="gst-customer-number" placeholder="15-character GSTIN" maxlength="15" style="text-transform:uppercase;" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">TurboFix's GST Number (optional)</label>
+        <input type="text" class="form-control" id="gst-turbofix-number" placeholder="15-character GSTIN" maxlength="15" style="text-transform:uppercase;" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('gst-details-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitGstDetails()">Continue</button>
+    </div>
+  </div>
+</div>
+
 <!-- jsPDF CDN -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="./js/config.js"></script>
@@ -332,25 +373,96 @@
     return result;
   }
 
-  // ── Invoice modal ──────────────────────────────────────────────────────────
-  async function openInvoiceModal(orderId) {
-    openModal('invoice-modal');
-    document.getElementById('inv-modal-title').textContent = `Invoice — ${orderId}`;
-    document.getElementById('inv-modal-sub').textContent   = 'Loading…';
-    document.getElementById('invoice-modal-body').innerHTML = '<div class="page-loader"><div class="spinner"></div></div>';
+  // ── Invoice generation entry points ─────────────────────────────────────────
+  // Both "View" and "Invoice" buttons land here first: ask Without/With GST,
+  // then (if GST) collect the two GSTINs, before actually rendering anything.
+  let pendingInvoice = null; // { orderId, action: 'preview'|'download' }
+
+  function openInvoiceModal(orderId) {
+    pendingInvoice = { orderId, action: 'preview' };
+    openModal('gst-choice-modal');
+  }
+
+  function quickDownloadInvoice(orderId) {
+    pendingInvoice = { orderId, action: 'download' };
+    openModal('gst-choice-modal');
+  }
+
+  function chooseInvoiceType(withGst) {
+    closeModal('gst-choice-modal');
+    if (!withGst) { proceedInvoice(false, null); return; }
+    document.getElementById('gst-customer-number').value = '';
+    document.getElementById('gst-turbofix-number').value = localStorage.getItem('turbofix_gst_number') || '';
+    openModal('gst-details-modal');
+  }
+
+  function submitGstDetails() {
+    const custGst = document.getElementById('gst-customer-number').value.trim().toUpperCase();
+    const tfGst   = document.getElementById('gst-turbofix-number').value.trim().toUpperCase();
+
+    if (!custGst) { showToast("Enter the customer's GST number", 'warn'); return; }
+    if (custGst.length !== 15) { showToast('Customer GSTIN must be 15 characters', 'warn'); return; }
+    if (tfGst && tfGst.length !== 15) { showToast("TurboFix GSTIN must be 15 characters", 'warn'); return; }
+
+    if (tfGst) localStorage.setItem('turbofix_gst_number', tfGst);
+    closeModal('gst-details-modal');
+    proceedInvoice(true, { customerGst: custGst, companyGst: tfGst || '' });
+  }
+
+  // 18% GST, split 9% CGST + 9% SGST, backed out of the (unchanged) total cost —
+  // the customer's payable amount does not change between GST / non-GST invoices.
+  function computeGstBreakdown(total) {
+    const rate = 0.18;
+    const taxable = total / (1 + rate);
+    const half = (taxable * rate) / 2;
+    return {
+      taxable: Math.round(taxable * 100) / 100,
+      cgst:    Math.round(half * 100) / 100,
+      sgst:    Math.round(half * 100) / 100,
+      rate,
+    };
+  }
+
+  async function proceedInvoice(isGst, gstInfo) {
+    const { orderId, action } = pendingInvoice;
+
+    if (action === 'preview') {
+      openModal('invoice-modal');
+      document.getElementById('inv-modal-title').textContent = `${isGst ? 'Tax Invoice' : 'Invoice'} — ${orderId}`;
+      document.getElementById('inv-modal-sub').textContent   = 'Loading…';
+      document.getElementById('invoice-modal-body').innerHTML = '<div class="page-loader"><div class="spinner"></div></div>';
+    } else {
+      showToast('Fetching order…', 'info', 1500);
+    }
     currentInvoiceData = null;
 
     const r = await apiCall(`/orders/${orderId}`);
     if (!r || !r.ok) {
-      document.getElementById('invoice-modal-body').innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px;">Failed to load order</p>';
+      if (action === 'preview') {
+        document.getElementById('invoice-modal-body').innerHTML = '<p style="color:var(--danger);text-align:center;padding:30px;">Failed to load order</p>';
+      } else {
+        showToast('Failed to load order', 'error');
+      }
       return;
     }
     const o = r.data.data;
-    o.amount_paid = resolveAmountPaid(o);   // ← always use resolved value
+    // CRITICAL: must resolve amount_paid — without this the PDF/preview always shows UNPAID.
+    o.amount_paid = resolveAmountPaid(o);
+    o.is_gst_invoice      = isGst;
+    o.customer_gst_number = isGst ? gstInfo.customerGst : null;
+    o.company_gst_number  = isGst ? (gstInfo.companyGst || null) : null;
     currentInvoiceData = o;
 
-    document.getElementById('inv-modal-sub').textContent = formatDateTime(o.updated_at || o.created_at);
+    if (action === 'preview') {
+      document.getElementById('inv-modal-sub').textContent = formatDateTime(o.updated_at || o.created_at);
+      renderInvoicePreview(o);
+    } else {
+      downloadPDF();
+    }
+  }
 
+  // ── Invoice preview renderer ──────────────────────────────────────────────────
+  function renderInvoicePreview(o) {
     const services = Array.isArray(o.services) ? o.services : tryParseJSON(o.services, []);
     const cost     = Number(o.actual_cost || o.estimated_cost || 0);
     const amtPaid  = Number(o.amount_paid || 0);
@@ -363,8 +475,38 @@
     const partPaid = !paid && amtPaid > 0;
 
     const payStatus = paid ? 'Paid' : (partPaid ? 'Partially Paid' : 'Unpaid');
-    const payColor  = paid ? '#22C55E' : (partPaid ? '#F59E0B' : '#EF4444');
     console.log(`[invoice preview] ${o.order_id} | payStatus: ${payStatus} | cost: ${cost} | amtPaid: ${amtPaid} | status: ${o.status}`);
+
+    const isGst = !!o.is_gst_invoice;
+    const gst   = isGst ? computeGstBreakdown(cost) : null;
+
+    // Footer rows, in display order — built as data so padding/borders stay
+    // consistent regardless of which optional rows (GST / paid / balance) show up.
+    const footRows = [
+      ...(isGst ? [
+        { label: 'Taxable Value', amount: gst.taxable, color: '#475569' },
+        { label: 'CGST @ 9%',     amount: gst.cgst,     color: '#475569' },
+        { label: 'SGST @ 9%',     amount: gst.sgst,     color: '#475569' },
+      ] : []),
+      { label: isGst ? 'Total*' : 'Total', amount: cost, bold: true, color: '#1e293b' },
+      ...(amtPaid > 0 ? [{ label: '✓ Amount Paid', amount: amtPaid, color: '#16a34a' }] : []),
+      ...(balance > 0 ? [{ label: 'Balance Due',   amount: balance, color: '#dc2626' }] : []),
+    ];
+    const footRowsHtml = footRows.map((row, i) => {
+      const isFirst = i === 0;
+      const isLast  = i === footRows.length - 1;
+      const padTop  = row.bold ? '12px' : (isFirst ? '10px' : '4px');
+      const padBot  = isLast ? '12px' : (row.bold ? '4px' : '4px');
+      const border  = isFirst ? 'border-top:2px solid #e2e8f0;' : '';
+      const size    = row.bold ? '14px' : '13px';
+      const amtSize = row.bold ? '16px' : '13px';
+      const weight  = row.bold ? '700' : '600';
+      return `
+      <tr style="${border}background:#f8fafc;">
+        <td style="padding:${padTop} 12px ${padBot};font-weight:${weight};font-size:${size};color:${row.color};">${row.label}</td>
+        <td style="padding:${padTop} 12px ${padBot};font-weight:${row.bold ? '800' : weight};font-size:${amtSize};color:${row.color};text-align:right;">${formatCurrency(row.amount)}</td>
+      </tr>`;
+    }).join('');
 
     document.getElementById('invoice-modal-body').innerHTML = `
       <!-- Invoice preview — white background so text is always readable -->
@@ -389,10 +531,11 @@
               <div style="font-size:11px;font-weight:600;color:#64748b;margin-top:4px;text-transform:uppercase;letter-spacing:.08em;">Professional Mobile Repair</div>
               <div style="font-size:12px;color:#64748b;margin-top:6px;">11-1-441, Aghapura, Nampally, Hyderabad</div>
               <div style="font-size:12px;color:#64748b;">📞 +91 86396 05147 &nbsp;|&nbsp; ✉ support@turbofix.in</div>
+              ${o.company_gst_number ? `<div style="font-size:12px;color:#64748b;margin-top:2px;font-weight:600;">GSTIN: ${esc(o.company_gst_number)}</div>` : ''}
             </div>
           </div>
           <div style="text-align:right;">
-            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:4px;">Invoice</div>
+            <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:#94a3b8;margin-bottom:4px;">${isGst ? 'Tax Invoice' : 'Invoice'}</div>
             <div style="font-size:18px;font-weight:800;color:#1e293b;font-family:monospace;">#${esc(o.order_id)}</div>
             <div style="font-size:12px;color:#64748b;margin-top:6px;">Date: ${formatDate(o.updated_at||o.created_at)}</div>
             <div style="margin-top:10px;">
@@ -409,11 +552,13 @@
             <div style="font-size:13px;color:#475569;margin-top:4px;">${esc(o.customer_phone||'—')}</div>
             ${o.customer_email ? `<div style="font-size:13px;color:#475569;">${esc(o.customer_email)}</div>` : ''}
             ${o.customer_address ? `<div style="font-size:12px;color:#64748b;margin-top:6px;">${esc(o.customer_address)}</div>` : ''}
+            ${isGst && o.customer_gst_number ? `<div style="font-size:12px;color:#475569;margin-top:6px;font-weight:600;">GSTIN: ${esc(o.customer_gst_number)}</div>` : ''}
           </div>
           <div style="background:#f8fafc;border-radius:8px;padding:14px;">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:8px;">Device</div>
             <div style="font-weight:700;color:#1e293b;font-size:15px;">${esc(o.device_brand)} ${esc(o.device_model)}</div>
             ${o.technician_name ? `<div style="font-size:13px;color:#475569;margin-top:4px;">👨‍🔧 ${esc(o.technician_name)}</div>` : ''}
+            ${o.imei_number ? `<div style="font-size:12px;color:#475569;">📱 IMEI: ${esc(o.imei_number)}</div>` : ''}
             ${o.warranty_months ? `<div style="font-size:12px;color:#475569;">🛡 Warranty: ${o.warranty_months} month(s)</div>` : ''}
             ${o.scheduled_date  ? `<div style="font-size:12px;color:#64748b;">📅 Booked: ${formatDate(o.scheduled_date)} ${o.scheduled_time||''}</div>` : ''}
           </div>
@@ -440,22 +585,10 @@
               `).join('')}
             </tbody>
             <tfoot>
-              <tr style="border-top:2px solid #e2e8f0;background:#f8fafc;">
-                <td style="padding:12px 12px 4px;font-weight:700;font-size:14px;color:#1e293b;">Total</td>
-                <td style="padding:12px 12px 4px;font-weight:800;font-size:16px;color:#1e293b;text-align:right;">${formatCurrency(cost)}</td>
-              </tr>
-              ${amtPaid > 0 ? `
-              <tr>
-                <td style="padding:4px 12px;font-size:13px;color:#16a34a;font-weight:600;">✓ Amount Paid</td>
-                <td style="padding:4px 12px;font-size:13px;color:#16a34a;text-align:right;font-weight:600;">${formatCurrency(amtPaid)}</td>
-              </tr>` : ''}
-              ${balance > 0 ? `
-              <tr>
-                <td style="padding:4px 12px 12px;font-size:13px;color:#dc2626;font-weight:600;">Balance Due</td>
-                <td style="padding:4px 12px 12px;font-size:13px;color:#dc2626;text-align:right;font-weight:600;">${formatCurrency(balance)}</td>
-              </tr>` : ''}
+              ${footRowsHtml}
             </tfoot>
           </table>
+          ${isGst ? `<div style="text-align:right;font-size:11px;color:#94a3b8;font-style:italic;margin-top:6px;">* Total is inclusive of 18% GST (CGST 9% + SGST 9%)</div>` : ''}
         </div>
 
         ${o.issue_description ? `
@@ -482,19 +615,6 @@
         </div>
       </div>
     `;
-  }
-
-  // ── Quick download without modal ───────────────────────────────────────────
-  async function quickDownloadInvoice(orderId) {
-    showToast('Fetching order…', 'info', 1500);
-    const r = await apiCall(`/orders/${orderId}`);
-    if (!r || !r.ok) { showToast('Failed to load order', 'error'); return; }
-    const o = r.data.data;
-    // CRITICAL: must resolve amount_paid here too — same as openInvoiceModal.
-    // Without this, amount_paid = 0 and the PDF always shows UNPAID.
-    o.amount_paid = resolveAmountPaid(o);
-    currentInvoiceData = o;
-    downloadPDF();
   }
 
   // ── jsPDF invoice generation ───────────────────────────────────────────────
@@ -526,11 +646,15 @@
     const partPaid  = !paid && amtPaid > 0;
     const payStatus = paid ? 'PAID' : (partPaid ? 'PARTIALLY PAID' : 'UNPAID');
 
+    const isGst = !!o.is_gst_invoice;
+    const gst   = isGst ? computeGstBreakdown(cost) : null;
+
     console.log(`[PDF] ${o.order_id} | payStatus: ${payStatus} | cost: ${cost} | amtPaid: ${amtPaid} | status: ${o.status}`);
 
     // ── Brand header (dark bg) ────────────────────────────────────────────────
+    const HEADER_H = 44;
     doc.setFillColor(10, 14, 40);
-    doc.rect(0, 0, W, 40, 'F');
+    doc.rect(0, 0, W, HEADER_H, 'F');
 
     // Logo mark — blue rounded rectangle with lightning bolt
     const LOGO_X = MAR;
@@ -548,7 +672,10 @@
       [1, 1], 'F', true
     );
 
-    // TurboFix text — starts after logo (MAR + logo width + 4mm gap)
+    // TurboFix text — starts after logo (MAR + logo width + 4mm gap).
+    // Each fact gets its own short line so nothing can grow long enough to
+    // run into the right-hand invoice-number column (that caused the old
+    // single crammed contact line to collide with the date).
     const TX = MAR + LOGO_S + 4;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(20);
@@ -557,76 +684,100 @@
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(180, 190, 210);
-    doc.text('Professional Mobile Repair', TX, 22);
-    doc.text('11-1-441, Aghapura, Nampally, Hyderabad  |  support@turbofix.in  |  +91 86396 05147', TX, 29);
+    doc.text('Professional Mobile Repair', TX, 21);
+    doc.text('11-1-441, Aghapura, Nampally, Hyderabad', TX, 26.5);
+    doc.text('support@turbofix.in  |  +91 86396 05147', TX, 31.5);
+    if (o.company_gst_number) {
+      doc.setTextColor(140, 195, 255);
+      doc.text(`GSTIN: ${o.company_gst_number}`, TX, 37);
+    }
 
-    // Invoice badge (right side of header)
+    // Right column — invoice type / number / date, then the payment status
+    // pill directly beneath (kept inside the header so it can never collide
+    // with the Bill To / Device panel that follows).
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(9);
     doc.setTextColor(160, 180, 210);
-    doc.text('INVOICE', W - MAR, 14, { align: 'right' });
+    doc.text(isGst ? 'TAX INVOICE' : 'INVOICE', W - MAR, 13, { align: 'right' });
     doc.setFontSize(14);
     doc.setTextColor(255, 255, 255);
-    doc.text(`#${o.order_id}`, W - MAR, 22, { align: 'right' });
+    doc.text(`#${o.order_id}`, W - MAR, 21, { align: 'right' });
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8.5);
     doc.setTextColor(160, 180, 210);
-    doc.text(formatDate(o.updated_at || o.created_at), W - MAR, 30, { align: 'right' });
+    doc.text(formatDate(o.updated_at || o.created_at), W - MAR, 27, { align: 'right' });
 
-    Y = 48;  // slightly more space after taller header
-
-    // ── Status stamp ──────────────────────────────────────────────────────────
     const stampColor = paid ? [22, 163, 74] : (partPaid ? [180, 83, 9] : [185, 28, 28]);
     const stampBg    = paid ? [220, 252, 231] : (partPaid ? [254, 249, 195] : [254, 226, 226]);
+    const STAMP_W = 32, STAMP_H = 8, STAMP_Y = 31;
     doc.setFillColor(...stampBg);
-    doc.setDrawColor(...stampColor);
-    doc.roundedRect(W - MAR - 32, Y - 5.5, 32, 9, 2, 2, 'FD');
+    doc.roundedRect(W - MAR - STAMP_W, STAMP_Y, STAMP_W, STAMP_H, 2, 2, 'F');
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
     doc.setTextColor(...stampColor);
-    doc.text(payStatus, W - MAR - 16, Y + 0.5, { align: 'center' });
+    doc.text(payStatus, W - MAR - STAMP_W / 2, STAMP_Y + STAMP_H / 2 + 1, { align: 'center' });
 
-    // ── Section: Bill To + Device ─────────────────────────────────────────────
-    const colMid = W / 2 + 2;
+    Y = HEADER_H + 10;
 
+    // ── Section: Bill To + Device (boxed panels, height sized to content) ──────
+    const colGap  = 6;
+    const colW    = (W - MAR * 2 - colGap) / 2;
+    const leftX   = MAR;
+    const rightX  = MAR + colW + colGap;
+    const panelPad = 6;
+    const lineH     = 4.6;
+
+    const leftDetails = [{ text: o.customer_phone || '—' }];
+    if (o.customer_email) leftDetails.push({ text: o.customer_email });
+    if (isGst && o.customer_gst_number) leftDetails.push({ text: `GSTIN: ${o.customer_gst_number}`, bold: true, color: [51, 65, 85] });
+    if (o.customer_address) {
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.splitTextToSize(o.customer_address, colW - panelPad * 2).forEach(line => leftDetails.push({ text: line, muted: true }));
+    }
+
+    const rightDetails = [];
+    if (o.technician_name)  rightDetails.push({ text: `Technician: ${o.technician_name}` });
+    if (o.imei_number)      rightDetails.push({ text: `IMEI: ${o.imei_number}` });
+    if (o.warranty_months)  rightDetails.push({ text: `Warranty: ${o.warranty_months} month(s)` });
+    if (o.scheduled_date)   rightDetails.push({ text: `Booked: ${formatDate(o.scheduled_date)}${o.scheduled_time ? ' · ' + o.scheduled_time : ''}`, muted: true });
+
+    const detailCount = Math.max(leftDetails.length, rightDetails.length, 1);
+    const panelTop = Y;
+    const panelH   = panelPad * 1.7 + 8 + detailCount * lineH;
+
+    doc.setFillColor(248, 250, 252);
+    doc.roundedRect(leftX,  panelTop, colW, panelH, 2.5, 2.5, 'F');
+    doc.roundedRect(rightX, panelTop, colW, panelH, 2.5, 2.5, 'F');
+
+    let ly = panelTop + panelPad;
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(7.5);
-    doc.setTextColor(120, 130, 150);
-    doc.text('BILL TO', MAR, Y);
-    doc.text('DEVICE', colMid, Y);
-    Y += 5;
+    doc.setTextColor(140, 148, 165);
+    doc.text('BILL TO', leftX + panelPad, ly);
+    doc.text('DEVICE', rightX + panelPad, ly);
+    ly += 6;
 
-    // Customer name & device — use DARK colors on white PDF background
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(12);
     doc.setTextColor(20, 30, 50);
-    doc.text(o.customer_name || '—', MAR, Y);
-    doc.text(`${o.device_brand || ''} ${o.device_model || ''}`.trim(), colMid, Y);
-    Y += 5.5;
+    doc.text(o.customer_name || '—', leftX + panelPad, ly);
+    doc.text(`${o.device_brand || ''} ${o.device_model || ''}`.trim(), rightX + panelPad, ly);
+    ly += lineH + 1.5;
 
-    doc.setFont('helvetica', 'normal');
     doc.setFontSize(9);
-    doc.setTextColor(70, 85, 110);
-    doc.text(o.customer_phone || '—', MAR, Y);
-    if (o.technician_name) doc.text(`Tech: ${o.technician_name}`, colMid, Y);
-    Y += 4.5;
+    leftDetails.forEach((d, i) => {
+      doc.setFont('helvetica', d.bold ? 'bold' : 'normal');
+      doc.setTextColor(...(d.color || (d.muted ? [110, 122, 140] : [70, 85, 110])));
+      doc.text(d.text, leftX + panelPad, ly + i * lineH);
+    });
+    rightDetails.forEach((d, i) => {
+      doc.setFont('helvetica', d.bold ? 'bold' : 'normal');
+      doc.setTextColor(...(d.color || (d.muted ? [110, 122, 140] : [70, 85, 110])));
+      doc.text(d.text, rightX + panelPad, ly + i * lineH);
+    });
 
-    if (o.customer_email) { doc.text(o.customer_email, MAR, Y); }
-    if (o.warranty_months) doc.text(`Warranty: ${o.warranty_months} month(s)`, colMid, Y);
-    Y += 4.5;
-
-    if (o.customer_address) {
-      const addrLines = doc.splitTextToSize(o.customer_address, colMid - MAR - 10);
-      doc.setTextColor(100, 115, 135);
-      doc.text(addrLines, MAR, Y);
-    }
-    if (o.scheduled_date) { doc.setTextColor(70, 85, 110); doc.text(`Booked: ${formatDate(o.scheduled_date)}`, colMid, Y); }
-    Y += 10;
-
-    // ── Divider ────────────────────────────────────────────────────────────────
-    doc.setDrawColor(210, 218, 230);
-    doc.line(MAR, Y, W - MAR, Y);
-    Y += 6;
+    Y = panelTop + panelH + 8;
 
     // ── Services table ─────────────────────────────────────────────────────────
     doc.setFont('helvetica', 'bold');
@@ -656,23 +807,53 @@
       Y += 4;
     });
 
-    // ── Totals ─────────────────────────────────────────────────────────────────
-    Y += 2;
+    // ── Totals (boxed panel, right-aligned) ─────────────────────────────────────
+    Y += 4;
     const totals = [
-      { label: 'Sub-total', amount: cost, bold: false, color: [80, 95, 120] },
+      ...(isGst ? [
+        { label: 'Taxable Value', amount: gst.taxable, bold: false, color: [80, 95, 120] },
+        { label: 'CGST @ 9%',     amount: gst.cgst,    bold: false, color: [80, 95, 120] },
+        { label: 'SGST @ 9%',     amount: gst.sgst,    bold: false, color: [80, 95, 120] },
+      ] : [
+        { label: 'Sub-total', amount: cost, bold: false, color: [80, 95, 120] },
+      ]),
+      { label: isGst ? 'TOTAL*' : 'TOTAL', amount: cost, bold: true, color: [10, 20, 40], divider: true },
       ...(amtPaid > 0 ? [{ label: 'Amount Paid', amount: amtPaid, bold: false, color: [22, 163, 74] }] : []),
       ...(balance > 0 ? [{ label: 'Balance Due', amount: balance, bold: false, color: [185, 28, 28] }] : []),
-      { label: 'TOTAL', amount: cost, bold: true, color: [10, 20, 40] },
     ];
 
+    const TOTALS_W  = 88;
+    const TOTALS_X  = W - MAR - TOTALS_W;
+    const rowH      = 6.4;
+    const boxPadV   = 5;
+    const totalsH   = totals.length * rowH + boxPadV * 2 + (isGst ? 4 : 0);
+
+    doc.setFillColor(248, 250, 252);
+    doc.setDrawColor(226, 232, 240);
+    doc.roundedRect(TOTALS_X, Y, TOTALS_W, totalsH, 2.5, 2.5, 'FD');
+
+    let ty = Y + boxPadV + 2.5;
     totals.forEach(row => {
+      if (row.divider) {
+        doc.setDrawColor(215, 222, 232);
+        doc.line(TOTALS_X + 6, ty - 4.4, TOTALS_X + TOTALS_W - 6, ty - 4.4);
+      }
       doc.setFont('helvetica', row.bold ? 'bold' : 'normal');
-      doc.setFontSize(row.bold ? 12 : 9.5);
+      doc.setFontSize(row.bold ? 11.5 : 9.5);
       doc.setTextColor(...row.color);
-      doc.text(row.label, W - MAR - 42, Y);
-      doc.text(`Rs. ${Number(row.amount).toLocaleString('en-IN')}`, W - MAR, Y, { align: 'right' });
-      Y += row.bold ? 7 : 5.5;
+      doc.text(row.label, TOTALS_X + 6, ty);
+      doc.text(`Rs. ${Number(row.amount).toLocaleString('en-IN')}`, TOTALS_X + TOTALS_W - 6, ty, { align: 'right' });
+      ty += rowH;
     });
+
+    if (isGst) {
+      doc.setFont('helvetica', 'italic');
+      doc.setFontSize(6.8);
+      doc.setTextColor(130, 140, 158);
+      doc.text('Inclusive of 18% GST (CGST 9% + SGST 9%)', TOTALS_X + TOTALS_W - 6, ty - 2, { align: 'right' });
+    }
+
+    Y = Y + totalsH + 8;
 
     // ── Issue notes ────────────────────────────────────────────────────────────
     if (o.issue_description) {
@@ -733,8 +914,9 @@
     doc.text('support@turbofix.in  ·  +91 86396 05147  ·  www.turbofix.in', W / 2, pageH - 11, { align: 'center' });
     doc.text('This is a computer generated invoice and does not require a signature/stamp.', W / 2, pageH - 6, { align: 'center' });
 
-    doc.save(`TurboFix-Invoice-${o.order_id}.pdf`);
-    console.log(`[PDF] Generated: TurboFix-Invoice-${o.order_id}.pdf | status: ${payStatus}`);
+    const fileName = `TurboFix-${isGst ? 'TaxInvoice' : 'Invoice'}-${o.order_id}.pdf`;
+    doc.save(fileName);
+    console.log(`[PDF] Generated: ${fileName} | status: ${payStatus}`);
     showToast('Invoice downloaded!', 'success');
   }
 

@@ -95,6 +95,7 @@ CREATE TABLE IF NOT EXISTS repair_orders (
   admin_notes      TEXT,
   technician_notes TEXT,
   warranty_months  SMALLINT      DEFAULT 6,
+  imei_number      VARCHAR(20),
   created_at       TIMESTAMPTZ   DEFAULT NOW(),
   updated_at       TIMESTAMPTZ   DEFAULT NOW()
 );

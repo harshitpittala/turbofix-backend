@@ -132,6 +132,18 @@ CREATE TABLE IF NOT EXISTS payments (
   INDEX idx_order (order_id)
 );
 
+-- ── Expenses ─────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS expenses (
+  id            INT            PRIMARY KEY AUTO_INCREMENT,
+  amount        DECIMAL(10,2)  NOT NULL,
+  expense_date  DATE           NOT NULL,
+  reason        VARCHAR(200)   NOT NULL,
+  notes         TEXT,
+  created_at    TIMESTAMP      DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  INDEX idx_expense_date (expense_date)
+);
+
 -- ── Seed: Default Super Admin ─────────────────────────────────────
 -- Password: Admin@TurboFix2024  (change immediately after first login)
 INSERT INTO admins (name, email, password_hash, role) VALUES

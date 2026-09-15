@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Analysis — TurboFix CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/crm.css" />
+  <style>
+    .section-title { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 2px; }
+    .section-subtitle { font-size: 12px; color: var(--text-muted); margin-bottom: 16px; }
+    .section-block { margin-bottom: 32px; }
+    .compare-bars { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+    .compare-row { display: grid; grid-template-columns: 90px 1fr 100px; align-items: center; gap: 12px; }
+    .compare-label { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+    .compare-track { height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden; }
+    .compare-fill { height: 100%; border-radius: 5px; min-width: 2px; transition: width .6s ease; }
+    .compare-fill.income { background: linear-gradient(90deg, var(--success), #34D399); }
+    .compare-fill.expense { background: linear-gradient(90deg, var(--danger), #F87171); }
+    .compare-value { font-size: 13px; font-weight: 700; color: var(--text); text-align: right; }
+    .net-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 700; }
+    .net-pill.pos { background: rgba(16,185,129,.15); color: var(--success); }
+    .net-pill.neg { background: rgba(239,68,68,.15); color: var(--danger); }
+    .range-toolbar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+    .range-toolbar .form-group { margin-bottom: 0; }
+  </style>
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="crm-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">T</div>
+      <div><div class="logo-text">TurboFix</div><div class="logo-sub">CRM Dashboard</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a href="./index.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>Dashboard</a>
+        <a href="./orders.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>Orders</a>
+        <a href="./workdone.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Work Done</a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-label">Management</div>
+        <a href="./technicians.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>Technicians</a>
+        <a href="./customers.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Customers</a>
+        <a href="./payments.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>Payments</a>
+        <a href="./analysis.html" class="nav-item active"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>Analysis</a>
+      </div>
+      <div class="nav-section">
+        <a href="#" class="nav-item" onclick="logout();return false;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>Sign Out</a>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">Admin</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-toggle" id="menu-toggle"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg></button>
+        <div>
+          <div class="header-title">Analysis</div>
+          <div class="header-subtitle">Income, expenses &amp; net profit</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="page-content">
+
+      <!-- Overview: Income / Expenses / Net for Week & Month -->
+      <div class="section-block">
+        <div class="section-title">Overview</div>
+        <div class="section-subtitle" id="overview-subtitle">—</div>
+        <div class="stats-grid">
+          <div class="stat-card green">
+            <div class="stat-icon green"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></div>
+            <div class="stat-value" id="income-week">—</div>
+            <div class="stat-label">Income This Week</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-icon amber"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            <div class="stat-value" id="expense-week">—</div>
+            <div class="stat-label">Expenses This Week</div>
+          </div>
+          <div class="stat-card blue" id="net-week-card">
+            <div class="stat-icon blue" id="net-week-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            <div class="stat-value" id="net-week">—</div>
+            <div class="stat-label">Net Income This Week</div>
+          </div>
+          <div class="stat-card green">
+            <div class="stat-icon green"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></div>
+            <div class="stat-value" id="income-month">—</div>
+            <div class="stat-label">Income This Month</div>
+          </div>
+          <div class="stat-card amber">
+            <div class="stat-icon amber"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            <div class="stat-value" id="expense-month">—</div>
+            <div class="stat-label">Expenses This Month</div>
+          </div>
+          <div class="stat-card blue" id="net-month-card">
+            <div class="stat-icon blue" id="net-month-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+            <div class="stat-value" id="net-month">—</div>
+            <div class="stat-label">Net Income This Month</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Custom Date Range Calculator -->
+      <div class="section-block">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Custom Date Range</div>
+              <div class="card-subtitle">Pick a period to calculate income, expenses &amp; net profit</div>
+            </div>
+          </div>
+          <div class="range-toolbar">
+            <div class="form-group">
+              <label class="form-label">From</label>
+              <input type="date" class="form-control" id="an-from" onchange="loadCustomRange()" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">To</label>
+              <input type="date" class="form-control" id="an-to" onchange="loadCustomRange()" />
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="resetRange()">Reset to this month</button>
+          </div>
+
+          <div class="stats-grid" style="margin-top:20px;margin-bottom:0;">
+            <div class="stat-card green">
+              <div class="stat-icon green"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg></div>
+              <div class="stat-value" id="range-income">—</div>
+              <div class="stat-label">Income (Selected Range)</div>
+            </div>
+            <div class="stat-card amber">
+              <div class="stat-icon amber"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+              <div class="stat-value" id="range-expense">—</div>
+              <div class="stat-label">Expenses (Selected Range)</div>
+            </div>
+            <div class="stat-card blue" id="net-range-card">
+              <div class="stat-icon blue" id="net-range-icon"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></div>
+              <div class="stat-value" id="net-range">—</div>
+              <div class="stat-label">Net Income (Selected Range)</div>
+            </div>
+          </div>
+
+          <div class="compare-bars" id="range-compare"></div>
+        </div>
+      </div>
+
+      <!-- Expenses -->
+      <div class="section-block">
+        <div class="card">
+          <div class="card-header">
+            <div>
+              <div class="card-title">Expenses</div>
+              <div class="card-subtitle">All recorded business expenses</div>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="openAddExpenseModal()">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+              Add Expense
+            </button>
+          </div>
+
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Reason</th>
+                  <th>Notes</th>
+                  <th>Amount</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="expenses-tbody">
+                <tr><td colspan="5" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div id="expenses-pagination" class="pagination" style="margin-top:16px;"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Add/Edit Expense Modal -->
+<div class="modal-overlay" id="expense-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="expense-modal-title">Add Expense</div>
+      <button class="modal-close" onclick="closeModal('expense-modal')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="exp-edit-id" />
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Amount (₹) *</label>
+          <input type="number" class="form-control" id="exp-amount" placeholder="0.00" min="0.01" step="0.01" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Date *</label>
+          <input type="date" class="form-control" id="exp-date" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Reason / Cause *</label>
+        <input type="text" class="form-control" id="exp-reason" placeholder="e.g. Spare parts purchase" />
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" id="exp-notes" rows="3" placeholder="Optional notes"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('expense-modal')">Cancel</button>
+      <button class="btn btn-primary" id="exp-save-btn" onclick="saveExpense()">Add Expense</button>
+    </div>
+  </div>
+</div>
+
+<script src="./js/config.js"></script>
+<script src="./js/utils.js"></script>
+<script src="./js/auth.js"></script>
+<script>
+  initCRM();
+
+  // ── Date range helpers ──────────────────────────────────────────────────────
+  function toISODate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  }
+  function getWeekRange() {
+    const now = new Date();
+    const day = now.getDay(); // 0 = Sunday
+    const diffToMonday = day === 0 ? 6 : day - 1;
+    const start = new Date(now);
+    start.setDate(now.getDate() - diffToMonday);
+    return { from: toISODate(start), to: toISODate(now) };
+  }
+  function getMonthRange() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), 1);
+    return { from: toISODate(start), to: toISODate(now) };
+  }
+  // Formats a plain "YYYY-MM-DD" string using its own y/m/d — avoids the
+  // UTC-parsing pitfall of `new Date(isoString)` shifting the display date
+  // by a day depending on the viewer's timezone.
+  function formatISODate(iso) {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  let expensesCache = [];
+  let expPage = 1;
+  let editingExpenseId = null;
+
+  // ── Overview (This Week / This Month) ────────────────────────────────────────
+  async function loadOverview() {
+    const week  = getWeekRange();
+    const month = getMonthRange();
+
+    document.getElementById('overview-subtitle').textContent =
+      `Week: ${formatISODate(week.from)} – ${formatISODate(week.to)}  ·  Month: ${formatISODate(month.from)} – ${formatISODate(month.to)}`;
+
+    const [incWeek, expWeek, incMonth, expMonth] = await Promise.all([
+      apiCall(`/payments/summary?date_from=${week.from}&date_to=${week.to}`),
+      apiCall(`/expenses/summary?date_from=${week.from}&date_to=${week.to}`),
+      apiCall(`/payments/summary?date_from=${month.from}&date_to=${month.to}`),
+      apiCall(`/expenses/summary?date_from=${month.from}&date_to=${month.to}`),
+    ]);
+
+    const iw = incWeek?.ok  ? incWeek.data.data.total  : 0;
+    const ew = expWeek?.ok  ? expWeek.data.data.total  : 0;
+    const im = incMonth?.ok ? incMonth.data.data.total : 0;
+    const em = expMonth?.ok ? expMonth.data.data.total : 0;
+
+    document.getElementById('income-week').textContent   = formatCurrency(iw);
+    document.getElementById('expense-week').textContent  = formatCurrency(ew);
+    document.getElementById('income-month').textContent  = formatCurrency(im);
+    document.getElementById('expense-month').textContent = formatCurrency(em);
+
+    setNet('net-week', iw - ew);
+    setNet('net-month', im - em);
+  }
+
+  function formatSignedCurrency(value) {
+    const abs = formatCurrency(Math.abs(value));
+    return value < 0 ? `-${abs}` : abs;
+  }
+
+  function setNet(prefix, value) {
+    const valueEl = document.getElementById(prefix);
+    const cardEl  = document.getElementById(`${prefix}-card`);
+    const iconEl  = document.getElementById(`${prefix}-icon`);
+    const positive = value >= 0;
+
+    valueEl.textContent = formatSignedCurrency(value);
+    valueEl.style.color = positive ? 'var(--success)' : 'var(--danger)';
+
+    cardEl.classList.remove('blue', 'green', 'red');
+    cardEl.classList.add(positive ? 'green' : 'red');
+    iconEl.classList.remove('blue', 'green', 'red');
+    iconEl.classList.add(positive ? 'green' : 'red');
+  }
+
+  // ── Custom date range calculator ─────────────────────────────────────────────
+  async function loadCustomRange() {
+    const from = document.getElementById('an-from').value;
+    const to   = document.getElementById('an-to').value;
+    if (!from || !to) return;
+
+    const params = new URLSearchParams({ date_from: from, date_to: to });
+    const [incomeR, expenseR] = await Promise.all([
+      apiCall(`/payments/summary?${params}`),
+      apiCall(`/expenses/summary?${params}`),
+    ]);
+
+    const income  = incomeR?.ok  ? incomeR.data.data.total  : 0;
+    const expense = expenseR?.ok ? expenseR.data.data.total : 0;
+
+    document.getElementById('range-income').textContent  = formatCurrency(income);
+    document.getElementById('range-expense').textContent = formatCurrency(expense);
+    setNet('net-range', income - expense);
+
+    const max = Math.max(income, expense, 1);
+    document.getElementById('range-compare').innerHTML = `
+      <div class="compare-row">
+        <div class="compare-label">Income</div>
+        <div class="compare-track"><div class="compare-fill income" style="width:${Math.round((income/max)*100)}%"></div></div>
+        <div class="compare-value">${formatCurrency(income)}</div>
+      </div>
+      <div class="compare-row">
+        <div class="compare-label">Expenses</div>
+        <div class="compare-track"><div class="compare-fill expense" style="width:${Math.round((expense/max)*100)}%"></div></div>
+        <div class="compare-value">${formatCurrency(expense)}</div>
+      </div>
+    `;
+  }
+
+  function resetRange() {
+    const month = getMonthRange();
+    document.getElementById('an-from').value = month.from;
+    document.getElementById('an-to').value   = month.to;
+    loadCustomRange();
+  }
+
+  // ── Expenses list ─────────────────────────────────────────────────────────────
+  async function loadExpenses() {
+    const tbody = document.getElementById('expenses-tbody');
+    const params = new URLSearchParams({ page: expPage, limit: 10 });
+    const r = await apiCall(`/expenses?${params}`);
+    if (!r || !r.ok) { tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;color:var(--danger);padding:30px;">Failed to load</td></tr>`; return; }
+
+    const { data, pagination } = r.data;
+    expensesCache = data;
+
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="5"><div class="empty-state"><p>No expenses recorded yet</p></div></td></tr>`;
+      document.getElementById('expenses-pagination').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = data.map(e => `
+      <tr>
+        <td style="font-size:12px;color:var(--text-muted);">${formatDate(e.expense_date)}</td>
+        <td class="primary">${esc(e.reason)}</td>
+        <td style="font-size:12px;max-width:260px;">${esc(e.notes || '—')}</td>
+        <td style="font-weight:700;color:var(--danger);font-size:14px;">${formatCurrency(e.amount)}</td>
+        <td>
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-secondary btn-sm" onclick="editExpense(${e.id})">Edit</button>
+            <button class="btn btn-danger btn-sm" onclick="removeExpense(${e.id})">Delete</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    renderPagination('expenses-pagination', pagination, 'goToExpPage');
+  }
+
+  function goToExpPage(p) { expPage = p; loadExpenses(); }
+
+  function refreshAll() {
+    loadOverview();
+    loadCustomRange();
+    loadExpenses();
+  }
+
+  // ── Add / Edit / Delete ───────────────────────────────────────────────────────
+  function openAddExpenseModal() {
+    editingExpenseId = null;
+    document.getElementById('expense-modal-title').textContent = 'Add Expense';
+    document.getElementById('exp-save-btn').textContent = 'Add Expense';
+    document.getElementById('exp-amount').value = '';
+    document.getElementById('exp-date').value   = toISODate(new Date());
+    document.getElementById('exp-reason').value = '';
+    document.getElementById('exp-notes').value  = '';
+    openModal('expense-modal');
+  }
+
+  function editExpense(id) {
+    const e = expensesCache.find(x => x.id === id);
+    if (!e) return;
+    editingExpenseId = id;
+    document.getElementById('expense-modal-title').textContent = 'Edit Expense';
+    document.getElementById('exp-save-btn').textContent = 'Save Changes';
+    document.getElementById('exp-amount').value = e.amount;
+    document.getElementById('exp-date').value   = (e.expense_date || '').slice(0, 10);
+    document.getElementById('exp-reason').value = e.reason;
+    document.getElementById('exp-notes').value  = e.notes || '';
+    openModal('expense-modal');
+  }
+
+  async function saveExpense() {
+    const amount = document.getElementById('exp-amount').value;
+    const date   = document.getElementById('exp-date').value;
+    const reason = document.getElementById('exp-reason').value.trim();
+    const notes  = document.getElementById('exp-notes').value.trim();
+
+    if (!amount || parseFloat(amount) <= 0) { showToast('Enter a valid amount', 'warn'); return; }
+    if (!date)   { showToast('Expense date is required', 'warn'); return; }
+    if (!reason) { showToast('Reason is required', 'warn'); return; }
+
+    const payload = { amount: parseFloat(amount), expense_date: date, reason, notes: notes || undefined };
+    const endpoint = editingExpenseId ? `/expenses/${editingExpenseId}` : '/expenses';
+    const method   = editingExpenseId ? 'PUT' : 'POST';
+
+    const r = await apiCall(endpoint, { method, body: JSON.stringify(payload) });
+    if (!r || !r.ok) { showToast(r?.data?.message || 'Failed to save expense', 'error'); return; }
+
+    showToast(editingExpenseId ? 'Expense updated' : 'Expense added', 'success');
+    closeModal('expense-modal');
+    refreshAll();
+  }
+
+  async function removeExpense(id) {
+    if (!confirm('Delete this expense record? This cannot be undone.')) return;
+    const r = await apiCall(`/expenses/${id}`, { method: 'DELETE' });
+    if (!r || !r.ok) { showToast(r?.data?.message || 'Failed to delete expense', 'error'); return; }
+    showToast('Expense deleted', 'success');
+    refreshAll();
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', (e) => { if (e.target === el) el.classList.remove('open'); });
+  });
+
+  // ── Init ──────────────────────────────────────────────────────────────────────
+  (function initRange() {
+    const month = getMonthRange();
+    document.getElementById('an-from').value = month.from;
+    document.getElementById('an-to').value   = month.to;
+  })();
+
+  loadOverview();
+  loadCustomRange();
+  loadExpenses();
+</script>
+</body>
+</html>

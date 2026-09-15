@@ -16,6 +16,7 @@ const orderRoutes       = require('./routes/orders');
 const technicianRoutes  = require('./routes/technicians');
 const customerRoutes    = require('./routes/customers');
 const paymentRoutes     = require('./routes/payments');
+const expenseRoutes     = require('./routes/expenses');
 const dashboardRoutes   = require('./routes/dashboard');
 const contactRoutes     = require('./routes/contact');
 
@@ -93,6 +94,7 @@ app.use('/api/orders',      orderRoutes);
 app.use('/api/technicians', technicianRoutes);
 app.use('/api/customers',   customerRoutes);
 app.use('/api/payments',    paymentRoutes);
+app.use('/api/expenses',    expenseRoutes);
 app.use('/api/dashboard',   dashboardRoutes);
 app.use('/api/contact',     contactRoutes);
 

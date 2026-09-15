@@ -154,6 +154,23 @@ CREATE TRIGGER payments_updated_at
   BEFORE UPDATE ON payments
   FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
+-- ── Expenses ─────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS expenses (
+  id            SERIAL        PRIMARY KEY,
+  amount        DECIMAL(10,2) NOT NULL,
+  expense_date  DATE          NOT NULL,
+  reason        VARCHAR(200)  NOT NULL,
+  notes         TEXT,
+  created_at    TIMESTAMPTZ   DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ   DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses (expense_date);
+
+CREATE TRIGGER expenses_updated_at
+  BEFORE UPDATE ON expenses
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
 -- ── Seed: Default Super Admin ─────────────────────────────────────
 -- Password: Admin@TurboFix2024  (change immediately after first login)
 INSERT INTO admins (name, email, password_hash, role) VALUES

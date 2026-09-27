@@ -17,6 +17,7 @@
  *
  * EXPORTS:
  *   sendBookingConfirmation({ orderId, customerName, customerEmail, ... })
+ *   sendDevicePickedUp({ orderId, customerName, customerEmail, deviceBrand, deviceModel })
  *   sendAdminNotification({ orderId, customerName, customerPhone, ... })
  */
 
@@ -475,7 +476,7 @@ async function sendBookingConfirmation({
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 auto 16px;">
           <tr>
             <td style="padding:0 6px;">
-              <a href="https://instagram.com/turbofix" target="_blank"
+              <a href="https://www.instagram.com/turbofix.in" target="_blank"
                 style="display:inline-block;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);
                        border-radius:8px;padding:7px 12px;font-size:11px;color:#9ca3af;text-decoration:none;">
                 Instagram
@@ -540,7 +541,259 @@ async function sendBookingConfirmation({
   }
 }
 
-// ── 2. Admin new-booking notification ────────────────────────────────────────
+// ── 2. Customer device-picked-up notification ────────────────────────────────
+/**
+ * Sends the "Your Device Has Been Picked Up!" email once a technician collects
+ * the device (order status transitions to 'picked_up').
+ */
+async function sendDevicePickedUp({
+  orderId, customerName, customerEmail, deviceBrand, deviceModel,
+}) {
+  const resend = getResend();
+  if (!resend) return;
+  if (!customerEmail) return;
+
+  const deviceFull = `${deviceBrand || ''} ${deviceModel || ''}`.trim() || 'Your Device';
+
+  const html = `<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Your Device Has Been Picked Up — TurboFix</title>
+  <style>
+    body, table, td, a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
+    table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
+    img { -ms-interpolation-mode:bicubic; border:0; height:auto; line-height:100%; outline:none; text-decoration:none; }
+    @media only screen and (max-width:600px) {
+      .email-container { width:100% !important; }
+      .section-pad { padding-left:20px !important; padding-right:20px !important; }
+      .hero-heading { font-size:22px !important; }
+    }
+  </style>
+</head>
+<body style="margin:0;padding:0;background-color:#eef1f6;font-family:Arial,Helvetica,sans-serif;">
+
+<table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color:#eef1f6;">
+<tr><td align="center" style="padding:32px 16px;">
+
+  <table role="presentation" class="email-container" cellspacing="0" cellpadding="0" border="0"
+    style="width:100%;max-width:600px;background-color:#ffffff;border-radius:12px;overflow:hidden;border:1px solid #e2e8f0;box-shadow:0 4px 24px rgba(15,23,42,0.06);">
+
+    <!-- ═══ HEADER ═══ -->
+    <tr>
+      <td align="center" style="background-color:#0b1220;padding:28px 32px;" class="section-pad">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td valign="middle" style="padding-right:10px;">
+              <img src="https://turbofix.in/logo.png" width="40" height="40" alt="TurboFix"
+                style="display:block;border-radius:9px;width:40px;height:40px;" />
+            </td>
+            <td valign="middle" align="left">
+              <span style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:-0.3px;font-family:Arial,Helvetica,sans-serif;">TurboFix</span>
+              <br/>
+              <span style="font-size:10px;font-weight:600;color:#7c93c4;letter-spacing:0.14em;">HYDERABAD</span>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ═══ TOP ACCENT LINE ═══ -->
+    <tr>
+      <td style="height:3px;background:linear-gradient(90deg,#0066FF,#00AAFF);font-size:0;line-height:0;">&nbsp;</td>
+    </tr>
+
+    <!-- ═══ BODY ═══ -->
+    <tr>
+      <td style="padding:36px 32px 8px;" class="section-pad">
+        <h1 class="hero-heading" style="margin:0 0 18px;font-size:24px;font-weight:800;color:#0f172a;letter-spacing:-0.3px;line-height:1.3;font-family:Arial,Helvetica,sans-serif;">
+          Your Device Has Been Picked Up!
+        </h1>
+
+        <p style="margin:0 0 4px;font-size:14px;color:#334155;line-height:1.6;">
+          Hi <strong>${customerName}</strong>,
+        </p>
+        <p style="margin:0 0 24px;font-size:14px;color:#475569;line-height:1.6;">
+          Great news! Our technician has successfully picked up your device. It is currently on its way to our repair center for inspection and service.
+        </p>
+
+        <!-- Device Collected card -->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+          style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;margin-bottom:20px;">
+          <tr>
+            <td style="padding:16px 20px;">
+              <p style="margin:0 0 4px;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;">Device Collected</p>
+              <p style="margin:0;font-size:16px;font-weight:700;color:#0066FF;">${deviceFull}</p>
+            </td>
+          </tr>
+        </table>
+
+      </td>
+    </tr>
+
+    <!-- ═══ REPAIR STATUS TRACKER ═══ -->
+    <tr>
+      <td style="padding:0 32px 32px;" class="section-pad">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"
+          style="background:#ffffff;border:1px solid #e2e8f0;border-radius:10px;">
+          <tr>
+            <td style="padding:22px 24px;">
+              <p style="margin:0 0 18px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.1em;">Repair Status</p>
+
+              <!-- Step 1 — done -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td width="28" valign="top">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background:#0066FF;border-radius:50%;width:24px;height:24px;">
+                      <tr><td align="center" valign="middle" style="width:24px;height:24px;font-size:12px;font-weight:800;color:#ffffff;">&#10003;</td></tr>
+                    </table>
+                  </td>
+                  <td style="padding-left:12px;padding-bottom:2px;">
+                    <span style="font-size:13px;font-weight:700;color:#0f172a;">Device Picked Up</span>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td width="28" align="center" style="padding:2px 0;"><div style="width:2px;height:18px;background:#0066FF;margin:0 auto;font-size:0;line-height:0;">&nbsp;</div></td>
+              </tr></table>
+
+              <!-- Step 2 — current -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td width="28" valign="top">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background:#0066FF;border-radius:50%;width:24px;height:24px;">
+                      <tr><td align="center" valign="middle" style="width:24px;height:24px;font-size:11px;font-weight:800;color:#ffffff;">2</td></tr>
+                    </table>
+                  </td>
+                  <td style="padding-left:12px;padding-bottom:2px;">
+                    <span style="font-size:13px;font-weight:700;color:#0066FF;">Diagnosis &amp; Repair in Progress</span>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td width="28" align="center" style="padding:2px 0;"><div style="width:2px;height:18px;background:#e2e8f0;margin:0 auto;font-size:0;line-height:0;">&nbsp;</div></td>
+              </tr></table>
+
+              <!-- Step 3 — pending -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td width="28" valign="top">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background:#e2e8f0;border-radius:50%;width:24px;height:24px;">
+                      <tr><td align="center" valign="middle" style="width:24px;height:24px;font-size:11px;font-weight:800;color:#94a3b8;">3</td></tr>
+                    </table>
+                  </td>
+                  <td style="padding-left:12px;padding-bottom:2px;">
+                    <span style="font-size:13px;font-weight:600;color:#94a3b8;">Quality Check</span>
+                  </td>
+                </tr>
+              </table>
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr>
+                <td width="28" align="center" style="padding:2px 0;"><div style="width:2px;height:18px;background:#e2e8f0;margin:0 auto;font-size:0;line-height:0;">&nbsp;</div></td>
+              </tr></table>
+
+              <!-- Step 4 — pending -->
+              <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+                <tr>
+                  <td width="28" valign="top">
+                    <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="background:#e2e8f0;border-radius:50%;width:24px;height:24px;">
+                      <tr><td align="center" valign="middle" style="width:24px;height:24px;font-size:11px;font-weight:800;color:#94a3b8;">4</td></tr>
+                    </table>
+                  </td>
+                  <td style="padding-left:12px;">
+                    <span style="font-size:13px;font-weight:600;color:#94a3b8;">Out for Delivery</span>
+                  </td>
+                </tr>
+              </table>
+
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ═══ NEXT STEPS NOTE ═══ -->
+    <tr>
+      <td style="padding:0 32px 28px;" class="section-pad">
+        <p style="margin:0;font-size:13px;color:#475569;line-height:1.7;">
+          Our certified technicians will begin working on your device right away. We aim to complete the diagnosis within a few hours and will keep you updated at every stage — from repair approval to final quality check.
+        </p>
+      </td>
+    </tr>
+
+    <!-- ═══ CTA BUTTONS ═══ -->
+    <tr>
+      <td align="center" style="padding:0 32px 32px;" class="section-pad">
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0">
+          <tr>
+            <td>
+              <a href="tel:+918639605147"
+                style="display:inline-block;background:#0066FF;color:#ffffff;text-decoration:none;
+                       font-size:13px;font-weight:700;padding:12px 24px;border-radius:8px;
+                       font-family:Arial,Helvetica,sans-serif;">
+                Call Support
+              </a>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+
+    <!-- ═══ DIVIDER ═══ -->
+    <tr><td style="padding:0 32px;"><div style="height:1px;background:#e2e8f0;font-size:0;line-height:0;">&nbsp;</div></td></tr>
+
+    <!-- ═══ FOOTER ═══ -->
+    <tr>
+      <td align="center" style="padding:28px 32px;background:#f8fafc;" class="section-pad">
+        <p style="margin:0 0 8px;font-size:14px;font-weight:800;color:#0f172a;font-family:Arial,Helvetica,sans-serif;">TurboFix Hyderabad</p>
+        <p style="margin:0 0 14px;font-size:11px;color:#64748b;">Fast, Reliable &amp; Professional Mobile Repairs</p>
+
+        <p style="margin:0 0 6px;font-size:12px;color:#475569;">
+          <a href="tel:+918639605147" style="color:#475569;text-decoration:none;">+91 86396 05147</a>
+          &nbsp;&nbsp;|&nbsp;&nbsp;
+          <a href="mailto:support@turbofix.in" style="color:#475569;text-decoration:none;">support@turbofix.in</a>
+        </p>
+        <p style="margin:0 0 16px;font-size:11px;color:#94a3b8;">
+          11-1-441, Aghapura, Nampally, Hyderabad, Telangana 500001
+        </p>
+
+        <div style="height:1px;background:#e2e8f0;margin:0 0 16px;font-size:0;line-height:0;">&nbsp;</div>
+
+        <p style="margin:0;font-size:10px;color:#94a3b8;line-height:1.6;">
+          This is an automated notification. Please do not reply directly to this email.<br/>
+          &copy; ${new Date().getFullYear()} TurboFix. All rights reserved.
+        </p>
+      </td>
+    </tr>
+
+  </table>
+
+</td></tr>
+</table>
+
+</body>
+</html>`;
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from:    FROM,
+      to:      customerEmail,
+      subject: `📦 Your Device Has Been Picked Up — ${orderId} | TurboFix`,
+      html,
+    });
+
+    if (error) {
+      console.error(`❌ [email] Device-picked-up notice failed for ${orderId}:`, error);
+    } else {
+      console.log(`✅ [email] Device-picked-up notice sent → ${customerEmail} | order: ${orderId} | resend_id: ${data?.id}`);
+    }
+  } catch (err) {
+    console.error(`❌ [email] Unexpected error for ${orderId}:`, err.message);
+  }
+}
+
+// ── 3. Admin new-booking notification ────────────────────────────────────────
 async function sendAdminNotification({
   orderId, customerName, customerPhone, customerEmail,
   deviceBrand, deviceModel, services,
@@ -681,7 +934,7 @@ async function sendAdminNotification({
   }
 }
 
-// ── 3. Contact form message → admin inbox ────────────────────────────────────
+// ── 4. Contact form message → admin inbox ────────────────────────────────────
 /**
  * Sends a "New Contact Message" notification to ADMIN_EMAIL whenever a visitor
  * submits the /contact page form. Fire-and-forget from the route handler.
@@ -750,4 +1003,4 @@ async function sendContactMessage({ name, email, phone, subject, message }) {
   return { skipped: false };
 }
 
-module.exports = { sendBookingConfirmation, sendAdminNotification, sendContactMessage };
+module.exports = { sendBookingConfirmation, sendDevicePickedUp, sendAdminNotification, sendContactMessage };

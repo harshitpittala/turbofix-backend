@@ -4,6 +4,7 @@
 
 const jwt  = require('jsonwebtoken');
 const pool = require('../config/database');
+const { isOwner, isAdminTable } = require('../utils/roles');
 
 // Verify JWT and attach decoded payload to req.user
 const authenticate = async (req, res, next) => {
@@ -26,8 +27,11 @@ const authenticate = async (req, res, next) => {
   }
 };
 
+// Owner-level access only (role 'admin' or 'super_admin'). Excludes 'telecaller' —
+// this gates every financial/management endpoint (payments, expenses, dashboard
+// analytics, technician management, order pricing).
 const authorizeAdmin = (req, res, next) => {
-  if (req.user?.type !== 'admin') {
+  if (!isOwner(req.user)) {
     return res.status(403).json({ success: false, message: 'Admin access required' });
   }
   next();
@@ -36,6 +40,16 @@ const authorizeAdmin = (req, res, next) => {
 const authorizeSuperAdmin = (req, res, next) => {
   if (req.user?.type !== 'admin' || req.user?.role !== 'super_admin') {
     return res.status(403).json({ success: false, message: 'Super admin access required' });
+  }
+  next();
+};
+
+// Any admins-table user regardless of role (owner or telecaller) — never technicians.
+// Used for shared operational endpoints (order creation/search, customer lookup)
+// where the controller itself enforces any field-level (e.g. pricing) restrictions.
+const authorizeAdminOrTelecaller = (req, res, next) => {
+  if (!isAdminTable(req.user)) {
+    return res.status(403).json({ success: false, message: 'Staff access required' });
   }
   next();
 };
@@ -64,4 +78,7 @@ const requireActiveAccount = async (req, res, next) => {
   }
 };
 
-module.exports = { authenticate, authorizeAdmin, authorizeSuperAdmin, authorizeStaff, requireActiveAccount };
+module.exports = {
+  authenticate, authorizeAdmin, authorizeSuperAdmin, authorizeStaff,
+  authorizeAdminOrTelecaller, requireActiveAccount,
+};

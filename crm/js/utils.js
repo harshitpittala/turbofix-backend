@@ -94,6 +94,10 @@ function statusBadge(status) {
 function priorityBadge(priority) {
   return `<span class="badge badge-${priority}">${CRM.PRIORITY_LABELS[priority] || priority}</span>`;
 }
+function activityStatusBadge(status) {
+  const cls = { pending: 'badge-pending', done: 'badge-ready', cancelled: 'badge-cancelled' }[status] || 'badge-normal';
+  return `<span class="badge ${cls}">${CRM.ACTIVITY_STATUS_LABELS[status] || status}</span>`;
+}
 
 // ── Tech avatar ───────────────────────────────────────────────────────────────
 function techAvatar(name, color = '#00AAFF', size = 28) {

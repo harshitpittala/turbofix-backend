@@ -3,6 +3,7 @@
  */
 
 const pool = require('../config/database');
+const { isOwner } = require('../utils/roles');
 
 // GET /api/customers  (admin)
 const getCustomers = async (req, res, next) => {
@@ -77,9 +78,19 @@ const getCustomerById = async (req, res, next) => {
       [customer.id]
     );
 
+    // Telecallers see the customer and their order history, but never pricing/payment totals.
+    const owner = isOwner(req.user);
+    const safeOrders = owner
+      ? orders
+      : orders.map(({ estimated_cost, actual_cost, ...rest }) => rest);
+
     res.json({
       success: true,
-      data: { ...customer, orders, total_paid: parseFloat(total_paid) },
+      data: {
+        ...customer,
+        orders: safeOrders,
+        ...(owner ? { total_paid: parseFloat(total_paid) } : {}),
+      },
     });
   } catch (err) {
     next(err);

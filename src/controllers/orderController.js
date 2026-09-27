@@ -6,6 +6,8 @@ const pool = require('../config/database');
 const path = require('path');
 const fs   = require('fs');
 const { sendBookingConfirmation, sendAdminNotification } = require('../services/emailService');
+const { isOwner, isTelecaller } = require('../utils/roles');
+const { sanitizeOrderForRole, sanitizeOrdersForRole, findProtectedPriceFields } = require('../utils/orderSanitize');
 
 const generateOrderId = () => {
   const rand = Math.floor(100000 + Math.random() * 900000);
@@ -15,6 +17,22 @@ const generateOrderId = () => {
 const parseServices = (val) => {
   if (Array.isArray(val)) return val;
   try { return JSON.parse(val); } catch { return [val]; }
+};
+
+// Customer Care attribution must point at an active admins-table user
+// (owner or telecaller). Returns the row id, or throws a 400-ish error.
+const resolveCustomerCareId = async (client, customerCareId) => {
+  if (customerCareId === undefined || customerCareId === null || customerCareId === '') return undefined;
+  const { rows } = await client.query(
+    `SELECT id FROM admins WHERE id = $1 AND is_active = true AND role IN ('admin','super_admin','telecaller')`,
+    [customerCareId]
+  );
+  if (!rows.length) {
+    const err = new Error('Invalid customer_care_id — must be an active internal user');
+    err.status = 400;
+    throw err;
+  }
+  return rows[0].id;
 };
 
 // POST /api/orders  (public — customer booking)
@@ -27,8 +45,32 @@ const createOrder = async (req, res, next) => {
       customer_name, customer_phone, customer_email, customer_address,
       device_brand, device_model, services, issue_description,
       service_type, pickup_address, scheduled_date, scheduled_time,
-      priority, estimated_cost,
+      priority,
     } = req.body;
+    let { estimated_cost, customer_care_id } = req.body;
+
+    // req.user is only present on the authenticated /orders/manual route —
+    // the public booking route (/orders) has no auth and no attribution.
+    const requester = req.user;
+
+    // Telecallers create orders but never set pricing — silently drop rather
+    // than trust a client-supplied estimate for that role.
+    if (requester && isTelecaller(requester)) {
+      estimated_cost = undefined;
+    }
+
+    // Customer Care attribution: only meaningful on authenticated (manual) creation.
+    // Telecallers default to self-attribution unless another eligible user is chosen.
+    if (requester) {
+      if (customer_care_id === undefined && isTelecaller(requester)) {
+        customer_care_id = requester.id;
+      }
+      customer_care_id = await resolveCustomerCareId(client, customer_care_id);
+    } else {
+      customer_care_id = undefined;
+    }
+
+    const createdById = requester && requester.type === 'admin' ? requester.id : null;
 
     // Upsert customer by phone
     const { rows: existing } = await client.query(
@@ -75,8 +117,9 @@ const createOrder = async (req, res, next) => {
       `INSERT INTO repair_orders
         (order_id, customer_id, device_brand, device_model, services,
          issue_description, service_type, pickup_address,
-         scheduled_date, scheduled_time, priority, estimated_cost)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         scheduled_date, scheduled_time, priority, estimated_cost,
+         customer_care_id, created_by_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        RETURNING id`,
       [
         orderId, customerId, device_brand, device_model,
@@ -84,6 +127,7 @@ const createOrder = async (req, res, next) => {
         service_type, pickup_address || null,
         scheduled_date || null, scheduled_time || null,
         priority || 'normal', estimated_cost || null,
+        customer_care_id || null, createdById,
       ]
     );
 
@@ -151,7 +195,7 @@ const getOrders = async (req, res, next) => {
   try {
     const {
       page = 1, limit = 20, status, search, technician_id,
-      date_from, date_to, priority,
+      date_from, date_to, priority, customer_care_id,
       sort_by = 'created_at', sort_dir = 'desc',
     } = req.query;
 
@@ -164,6 +208,7 @@ const getOrders = async (req, res, next) => {
     if (priority)      { conditions.push(`ro.priority = $${params.length + 1}`);            params.push(priority); }
     if (date_from)     { conditions.push(`ro.created_at::date >= $${params.length + 1}`);   params.push(date_from); }
     if (date_to)       { conditions.push(`ro.created_at::date <= $${params.length + 1}`);   params.push(date_to); }
+    if (customer_care_id) { conditions.push(`ro.customer_care_id = $${params.length + 1}`); params.push(customer_care_id); }
     if (search) {
       const s = `%${search}%`;
       conditions.push(
@@ -202,6 +247,7 @@ const getOrders = async (req, res, next) => {
          c.id AS customer_id, c.name AS customer_name, c.phone AS customer_phone,
          c.email AS customer_email,
          t.id AS technician_id, t.name AS technician_name, t.avatar_color,
+         cc.id AS customer_care_id, cc.name AS customer_care_name,
          COALESCE((
            SELECT SUM(p.amount)
            FROM payments p
@@ -210,6 +256,7 @@ const getOrders = async (req, res, next) => {
        FROM repair_orders ro
        LEFT JOIN customers c   ON ro.customer_id   = c.id
        LEFT JOIN technicians t ON ro.technician_id = t.id
+       LEFT JOIN admins     cc ON ro.customer_care_id = cc.id
        ${where}
        ORDER BY ${orderCol} ${orderDir} NULLS LAST
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
@@ -218,7 +265,7 @@ const getOrders = async (req, res, next) => {
 
     res.json({
       success: true,
-      data: orders,
+      data: sanitizeOrdersForRole(orders, req.user),
       pagination: {
         page: parseInt(page), limit: parseInt(limit), total,
         pages: Math.ceil(total / parseInt(limit)),
@@ -241,10 +288,12 @@ const getOrderById = async (req, res, next) => {
          ro.*, c.name AS customer_name, c.phone AS customer_phone,
          c.email AS customer_email, c.address AS customer_address,
          t.name AS technician_name, t.phone AS technician_phone,
-         t.specialty AS technician_specialty, t.avatar_color
+         t.specialty AS technician_specialty, t.avatar_color,
+         cc.id AS customer_care_id, cc.name AS customer_care_name
        FROM repair_orders ro
        LEFT JOIN customers c   ON ro.customer_id   = c.id
        LEFT JOIN technicians t ON ro.technician_id = t.id
+       LEFT JOIN admins     cc ON ro.customer_care_id = cc.id
        WHERE ${field} = $1`,
       [id]
     );
@@ -270,7 +319,18 @@ const getOrderById = async (req, res, next) => {
       [order.id]
     );
 
-    res.json({ success: true, data: { ...order, images, history, payments } });
+    // Fetch scheduled activities (callbacks, follow-ups, etc.)
+    const { rows: activities } = await pool.query(
+      `SELECT oa.*, a.name AS assigned_to_name
+       FROM order_activities oa
+       LEFT JOIN admins a ON oa.assigned_to_id = a.id
+       WHERE oa.order_id = $1
+       ORDER BY oa.scheduled_at ASC`,
+      [order.id]
+    );
+
+    const full = { ...order, images, history, payments, activities };
+    res.json({ success: true, data: sanitizeOrderForRole(full, req.user) });
   } catch (err) {
     next(err);
   }
@@ -302,9 +362,11 @@ const updateOrderStatus = async (req, res, next) => {
 
     const order = rows[0];
     const allowed = VALID_TRANSITIONS[order.status] || [];
-    const isAdmin = req.user.type === 'admin' || req.user.role === 'admin' || req.user.role === 'super_admin';
+    // Only owner roles may jump directly to any status; telecallers and
+    // technicians follow the same defined transition graph.
+    const canBypassTransitions = isOwner(req.user);
 
-    if (!isAdmin && !allowed.includes(status)) {
+    if (!canBypassTransitions && !allowed.includes(status)) {
       return res.status(400).json({
         success: false,
         message: `Cannot transition from '${order.status}' to '${status}'`,
@@ -354,9 +416,26 @@ const updateOrder = async (req, res, next) => {
   try {
     const { id } = req.params;
     const {
-      technician_id, estimated_cost, actual_cost, priority,
+      technician_id, priority,
       admin_notes, technician_notes, warranty_months, imei_number,
+      customer_care_id,
     } = req.body;
+    let { estimated_cost, actual_cost } = req.body;
+
+    // Price fields are owner-only. Reject the request outright rather than
+    // silently dropping the fields, so a crafted payload gets a clear 403
+    // instead of appearing to "succeed" while quietly ignoring the price change.
+    if (!isOwner(req.user)) {
+      const blocked = findProtectedPriceFields(req.body);
+      if (blocked.length) {
+        return res.status(403).json({
+          success: false,
+          message: `Not authorized to change: ${blocked.join(', ')}`,
+        });
+      }
+      estimated_cost = undefined;
+      actual_cost    = undefined;
+    }
 
     const { rows } = await pool.query(
       'SELECT id FROM repair_orders WHERE id = $1 OR order_id = $2', [id, id]
@@ -365,17 +444,22 @@ const updateOrder = async (req, res, next) => {
 
     const dbId = rows[0].id;
 
+    // Customer Care attribution — owner and telecaller may both set/change it;
+    // omit the field entirely to preserve whatever is already stored.
+    const resolvedCareId = await resolveCustomerCareId(pool, customer_care_id);
+
     await pool.query(
       `UPDATE repair_orders SET
-         technician_id    = COALESCE($1, technician_id),
-         estimated_cost   = COALESCE($2, estimated_cost),
-         actual_cost      = COALESCE($3, actual_cost),
-         priority         = COALESCE($4, priority),
-         admin_notes      = COALESCE($5, admin_notes),
-         technician_notes = COALESCE($6, technician_notes),
-         warranty_months  = COALESCE($7, warranty_months),
-         imei_number      = COALESCE($8, imei_number)
-       WHERE id = $9`,
+         technician_id     = COALESCE($1, technician_id),
+         estimated_cost    = COALESCE($2, estimated_cost),
+         actual_cost       = COALESCE($3, actual_cost),
+         priority          = COALESCE($4, priority),
+         admin_notes       = COALESCE($5, admin_notes),
+         technician_notes  = COALESCE($6, technician_notes),
+         warranty_months   = COALESCE($7, warranty_months),
+         imei_number       = COALESCE($8, imei_number),
+         customer_care_id  = COALESCE($9, customer_care_id)
+       WHERE id = $10`,
       [
         technician_id   ?? null,
         estimated_cost  ?? null,
@@ -385,6 +469,7 @@ const updateOrder = async (req, res, next) => {
         technician_notes ?? null,
         warranty_months ?? null,
         imei_number     ?? null,
+        resolvedCareId  ?? null,
         dbId,
       ]
     );

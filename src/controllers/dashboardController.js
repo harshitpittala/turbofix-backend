@@ -190,7 +190,59 @@ const getNotifications = async (req, res, next) => {
   }
 };
 
+// GET /api/dashboard/telecaller-stats  (owner or telecaller — no financial data)
+const getTelecallerStats = async (req, res, next) => {
+  try {
+    const { rows: [{ count: newOrdersToday }] } = await pool.query(
+      `SELECT COUNT(*) AS count FROM repair_orders WHERE created_at::date = CURRENT_DATE`
+    );
+
+    const { rows: [{ count: pendingCalls }] } = await pool.query(
+      `SELECT COUNT(*) AS count FROM order_activities
+       WHERE type = 'callback' AND status = 'pending'`
+    );
+
+    const { rows: [{ count: todaysRepairs }] } = await pool.query(
+      `SELECT COUNT(*) AS count FROM order_activities
+       WHERE type = 'repair_appointment' AND status = 'pending'
+         AND scheduled_at::date = CURRENT_DATE`
+    );
+
+    const { rows: [{ count: todaysFollowups }] } = await pool.query(
+      `SELECT COUNT(*) AS count FROM order_activities
+       WHERE type IN ('follow_up', 'post_repair_follow_up') AND status = 'pending'
+         AND scheduled_at::date = CURRENT_DATE`
+    );
+
+    const { rows: [{ count: overdue }] } = await pool.query(
+      `SELECT COUNT(*) AS count FROM order_activities
+       WHERE status = 'pending' AND scheduled_at < NOW()`
+    );
+
+    // "Needs attention": orders sitting in 'pending' for more than 24h with no activity yet.
+    const { rows: [{ count: needsAttention }] } = await pool.query(
+      `SELECT COUNT(*) AS count FROM repair_orders ro
+       WHERE ro.status = 'pending' AND ro.created_at < NOW() - INTERVAL '24 hours'
+         AND NOT EXISTS (SELECT 1 FROM order_activities oa WHERE oa.order_id = ro.id)`
+    );
+
+    res.json({
+      success: true,
+      data: {
+        new_orders_today: parseInt(newOrdersToday),
+        pending_calls:     parseInt(pendingCalls),
+        todays_repairs:    parseInt(todaysRepairs),
+        todays_followups:  parseInt(todaysFollowups),
+        overdue_activities: parseInt(overdue),
+        needs_attention:   parseInt(needsAttention),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 module.exports = {
   getStats, getRecentOrders, getRevenueChart,
-  getTechnicianPerformance, getNotifications,
+  getTechnicianPerformance, getNotifications, getTelecallerStats,
 };

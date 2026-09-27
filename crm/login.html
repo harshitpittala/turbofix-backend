@@ -39,7 +39,7 @@
 
       <!-- Role tabs -->
       <div class="login-tabs">
-        <button class="login-tab active" id="tab-admin" onclick="switchTab('admin')">Admin</button>
+        <button class="login-tab active" id="tab-admin" onclick="switchTab('admin')">Admin / Staff</button>
         <button class="login-tab" id="tab-technician" onclick="switchTab('technician')">Technician</button>
       </div>
 
@@ -133,7 +133,9 @@
 
       localStorage.setItem('crm_token', result.data.token);
       localStorage.setItem('crm_user',  JSON.stringify(result.data.user));
-      window.location.href = './index.html';
+      window.location.href = result.data.user.role === 'telecaller'
+        ? './telecaller-dashboard.html'
+        : './index.html';
     }
   </script>
 </body>

@@ -11,7 +11,7 @@ const {
   updateTechnician, toggleTechnicianStatus, resetTechnicianPassword,
 } = require('../controllers/technicianController');
 
-const { authenticate, authorizeAdmin, authorizeSuperAdmin } = require('../middleware/auth');
+const { authenticate, authorizeAdmin, authorizeSuperAdmin, authorizeAdminOrTelecaller } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 
 const createRules = [
@@ -21,14 +21,17 @@ const createRules = [
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters'),
 ];
 
-// All routes require admin
-router.use(authenticate, authorizeAdmin);
+router.use(authenticate);
 
-router.get('/',              getTechnicians);
-router.get('/:id',           getTechnicianById);
-router.post('/',             createRules, validate, createTechnician);
-router.put('/:id',           updateTechnician);
-router.patch('/:id/toggle',  toggleTechnicianStatus);
+// Read-only list/detail — telecaller needs this to assign a technician on an
+// order, but "technician management" (create/edit/deactivate/reset-password)
+// stays owner-only below.
+router.get('/',              authorizeAdminOrTelecaller, getTechnicians);
+router.get('/:id',           authorizeAdminOrTelecaller, getTechnicianById);
+
+router.post('/',             authorizeAdmin, createRules, validate, createTechnician);
+router.put('/:id',           authorizeAdmin, updateTechnician);
+router.patch('/:id/toggle',  authorizeAdmin, toggleTechnicianStatus);
 
 // Super admin only — reset another user's password
 router.post('/:id/reset-password',

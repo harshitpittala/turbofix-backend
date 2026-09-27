@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS admins (
   email         VARCHAR(100)  UNIQUE NOT NULL,
   password_hash VARCHAR(255)  NOT NULL,
   role          VARCHAR(20)   NOT NULL DEFAULT 'admin'
-                              CHECK (role IN ('super_admin', 'admin')),
+                              CHECK (role IN ('super_admin', 'admin', 'telecaller')),
   is_active     BOOLEAN       DEFAULT TRUE,
   last_login    TIMESTAMPTZ   NULL,
   created_at    TIMESTAMPTZ   DEFAULT NOW(),
@@ -96,6 +96,8 @@ CREATE TABLE IF NOT EXISTS repair_orders (
   technician_notes TEXT,
   warranty_months  SMALLINT      DEFAULT 6,
   imei_number      VARCHAR(20),
+  created_by_id    INTEGER       NULL REFERENCES admins(id) ON DELETE SET NULL,
+  customer_care_id INTEGER       NULL REFERENCES admins(id) ON DELETE SET NULL,
   created_at       TIMESTAMPTZ   DEFAULT NOW(),
   updated_at       TIMESTAMPTZ   DEFAULT NOW()
 );
@@ -103,6 +105,8 @@ CREATE TABLE IF NOT EXISTS repair_orders (
 CREATE INDEX IF NOT EXISTS idx_repair_orders_status     ON repair_orders (status);
 CREATE INDEX IF NOT EXISTS idx_repair_orders_created_at ON repair_orders (created_at);
 CREATE INDEX IF NOT EXISTS idx_repair_orders_order_id   ON repair_orders (order_id);
+CREATE INDEX IF NOT EXISTS idx_repair_orders_created_by    ON repair_orders (created_by_id);
+CREATE INDEX IF NOT EXISTS idx_repair_orders_customer_care ON repair_orders (customer_care_id);
 
 CREATE TRIGGER repair_orders_updated_at
   BEFORE UPDATE ON repair_orders
@@ -131,6 +135,53 @@ CREATE TABLE IF NOT EXISTS order_status_history (
 );
 
 CREATE INDEX IF NOT EXISTS idx_order_status_history_order ON order_status_history (order_id);
+
+-- ── Order Activities — schedules & follow-ups ──────────────────────
+CREATE TABLE IF NOT EXISTS order_activities (
+  id              SERIAL        PRIMARY KEY,
+  order_id        INTEGER       NOT NULL REFERENCES repair_orders(id) ON DELETE CASCADE,
+  type            VARCHAR(30)   NOT NULL
+                                CHECK (type IN (
+                                  'callback', 'repair_appointment', 'follow_up',
+                                  'pickup_delivery', 'post_repair_follow_up'
+                                )),
+  scheduled_at    TIMESTAMPTZ   NOT NULL,
+  notes           TEXT,
+  status          VARCHAR(20)   NOT NULL DEFAULT 'pending'
+                                CHECK (status IN ('pending', 'done', 'cancelled')),
+  assigned_to_id  INTEGER       NULL REFERENCES admins(id) ON DELETE SET NULL,
+  created_by_id   INTEGER       NULL REFERENCES admins(id) ON DELETE SET NULL,
+  created_by_name VARCHAR(100),
+  completed_at    TIMESTAMPTZ   NULL,
+  created_at      TIMESTAMPTZ   DEFAULT NOW(),
+  updated_at      TIMESTAMPTZ   DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_activities_order     ON order_activities (order_id);
+CREATE INDEX IF NOT EXISTS idx_order_activities_scheduled ON order_activities (scheduled_at);
+CREATE INDEX IF NOT EXISTS idx_order_activities_status    ON order_activities (status);
+CREATE INDEX IF NOT EXISTS idx_order_activities_assigned  ON order_activities (assigned_to_id);
+
+CREATE TRIGGER order_activities_updated_at
+  BEFORE UPDATE ON order_activities
+  FOR EACH ROW EXECUTE FUNCTION update_updated_at();
+
+-- ── Order Activity History — audit trail ───────────────────────────
+CREATE TABLE IF NOT EXISTS order_activity_history (
+  id                 SERIAL      PRIMARY KEY,
+  activity_id        INTEGER     NOT NULL REFERENCES order_activities(id) ON DELETE CASCADE,
+  action             VARCHAR(20) NOT NULL CHECK (action IN ('created', 'rescheduled', 'status_changed', 'updated')),
+  from_status        VARCHAR(20),
+  to_status          VARCHAR(20),
+  from_scheduled_at  TIMESTAMPTZ,
+  to_scheduled_at    TIMESTAMPTZ,
+  notes              TEXT,
+  changed_by_id      INTEGER     NOT NULL,
+  changed_by_name    VARCHAR(100),
+  created_at         TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_activity_history_activity ON order_activity_history (activity_id);
 
 -- ── Payments ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS payments (

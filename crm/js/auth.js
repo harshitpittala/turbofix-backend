@@ -36,9 +36,46 @@ function renderUserInfo(user) {
   const roleEl   = document.getElementById('sidebar-user-role');
   const avatarEl = document.getElementById('sidebar-user-avatar');
 
+  const roleLabels = { super_admin: 'Super Admin', admin: 'Admin', telecaller: 'Telecaller', technician: 'Technician' };
   if (nameEl)   nameEl.textContent   = user.name || 'Admin';
-  if (roleEl)   roleEl.textContent   = user.role === 'super_admin' ? 'Super Admin' : (user.type === 'technician' ? 'Technician' : 'Admin');
+  if (roleEl)   roleEl.textContent   = roleLabels[user.type === 'technician' ? 'technician' : user.role] || 'Admin';
   if (avatarEl) avatarEl.textContent = (user.name || 'A')[0].toUpperCase();
+}
+
+// Pages that expose owner-only financial data/management — never reachable by a telecaller,
+// even by typing the URL directly. The backend enforces this independently on every API
+// call; this redirect just keeps the telecaller out of a page that would otherwise render
+// broken (every fetch on it returns 403).
+const OWNER_ONLY_PAGES = [
+  'index.html', '', 'technicians.html', 'payments.html',
+  'analysis.html', 'workdone.html', 'customer-care-report.html',
+];
+
+// Hide sidebar links/controls marked for the *other* role. Pages shared between
+// roles (schedules.html) mark owner-only bits with data-owner-only and
+// telecaller-only bits (e.g. the telecaller dashboard link) with data-telecaller-only.
+function applyRoleVisibility(user) {
+  const telecaller = user.role === 'telecaller';
+
+  if (telecaller) {
+    document.querySelectorAll('.nav-item[href]').forEach((el) => {
+      const href = el.getAttribute('href').replace(/^\.\//, '');
+      if (OWNER_ONLY_PAGES.includes(href)) el.style.display = 'none';
+    });
+    document.querySelectorAll('[data-owner-only]').forEach((el) => { el.style.display = 'none'; });
+  } else {
+    document.querySelectorAll('[data-telecaller-only]').forEach((el) => { el.style.display = 'none'; });
+  }
+}
+
+function redirectIfOwnerOnlyPage(user) {
+  if (user.role !== 'telecaller') return false;
+  const page = window.location.pathname.split('/').pop();
+  if (OWNER_ONLY_PAGES.includes(page)) {
+    window.location.href = './telecaller-dashboard.html';
+    return true;
+  }
+  return false;
 }
 
 function logout(expired = false) {
@@ -52,7 +89,9 @@ function logout(expired = false) {
 function initCRM() {
   const user = requireAuth();
   if (!user) return null;
+  if (redirectIfOwnerOnlyPage(user)) return null;
   renderUserInfo(user);
+  applyRoleVisibility(user);
   initSidebar();
   markActiveNav();
   return user;

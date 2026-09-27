@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Schedules — TurboFix CRM</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./css/crm.css" />
+</head>
+<body>
+<div id="toast-container"></div>
+<div class="crm-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-icon">T</div>
+      <div><div class="logo-text">TurboFix</div><div class="logo-sub">CRM Dashboard</div></div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-label">Main</div>
+        <a href="./index.html" class="nav-item" data-owner-only><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>Dashboard</a>
+        <a href="./telecaller-dashboard.html" class="nav-item" data-telecaller-only><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>Dashboard</a>
+        <a href="./orders.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>Orders</a>
+        <a href="./customers.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Customers</a>
+        <a href="./schedules.html" class="nav-item active"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>Schedules</a>
+      </div>
+      <div class="nav-section" data-owner-only>
+        <div class="nav-label">Management</div>
+        <a href="./technicians.html" class="nav-item" data-owner-only>Technicians</a>
+        <a href="./payments.html" class="nav-item" data-owner-only>Payments</a>
+        <a href="./analysis.html" class="nav-item" data-owner-only>Analysis</a>
+      </div>
+      <div class="nav-section">
+        <a href="#" class="nav-item" onclick="logout();return false;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>Sign Out</a>
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="sidebar-user">
+        <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
+        <div class="sidebar-user-info">
+          <div class="sidebar-user-name" id="sidebar-user-name">Admin</div>
+          <div class="sidebar-user-role" id="sidebar-user-role">Admin</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-content">
+    <header class="header">
+      <div class="header-left">
+        <button class="menu-toggle" id="menu-toggle"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"/></svg></button>
+        <div><div class="header-title">Schedules & Follow-ups</div></div>
+      </div>
+    </header>
+
+    <div class="page-content">
+      <div class="toolbar">
+        <select class="form-control" style="width:150px;" onchange="applyFilter('view',this.value)">
+          <option value="">All</option>
+          <option value="today" selected>Today</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="overdue">Overdue</option>
+        </select>
+        <select class="form-control" style="width:150px;" onchange="applyFilter('status',this.value)">
+          <option value="pending" selected>Pending</option>
+          <option value="done">Done</option>
+          <option value="cancelled">Cancelled</option>
+          <option value="">All Statuses</option>
+        </select>
+        <select class="form-control" style="width:200px;" onchange="applyFilter('type',this.value)">
+          <option value="">All Types</option>
+        </select>
+        <div style="flex:1;"></div>
+        <button class="btn btn-primary btn-sm" onclick="openActivityModal()">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          Schedule Activity
+        </button>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th>Type</th>
+              <th>When</th>
+              <th>Status</th>
+              <th>Assigned</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="activities-tbody">
+            <tr><td colspan="7" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div id="activities-pagination" class="pagination" style="margin-top:16px;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Schedule Activity modal (create / edit) -->
+<div class="modal-overlay" id="activity-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="activity-modal-title">Schedule Activity</div>
+      <button class="modal-close" onclick="closeModal('activity-modal')"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="act-id" />
+      <div class="form-group">
+        <label class="form-label">Order (Order ID) *</label>
+        <input type="text" class="form-control" id="act-order-id" placeholder="e.g. TFX-528757" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Type *</label>
+          <select class="form-control" id="act-type"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Assign To</label>
+          <select class="form-control" id="act-assigned"><option value="">Unassigned</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Date *</label>
+          <input type="date" class="form-control" id="act-date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Time *</label>
+          <input type="time" class="form-control" id="act-time" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Notes</label>
+        <textarea class="form-control" id="act-notes" rows="2"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('activity-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitActivity()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="./js/config.js"></script>
+<script src="./js/utils.js"></script>
+<script src="./js/auth.js"></script>
+<script>
+  let currentUser = initCRM();
+  let staffList = [];
+  let state = { view: 'today', status: 'pending', type: '', page: 1 };
+
+  (function populateTypeSelects() {
+    const typeOpts = Object.entries(CRM.ACTIVITY_TYPE_LABELS).map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+    document.getElementById('act-type').innerHTML = typeOpts;
+    document.querySelector('select[onchange*="applyFilter(\'type\'"]').insertAdjacentHTML('beforeend', typeOpts);
+  })();
+
+  async function loadStaff() {
+    if (staffList.length) return;
+    const r = await apiCall('/staff?active=true');
+    if (r && r.ok) staffList = r.data.data || [];
+    const sel = document.getElementById('act-assigned');
+    sel.innerHTML = '<option value="">Unassigned</option>' +
+      staffList.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('');
+  }
+
+  function applyFilter(key, val) { state[key] = val; state.page = 1; loadActivities(); }
+  function goToPage(p) { state.page = p; loadActivities(); }
+
+  async function loadActivities() {
+    const tbody = document.getElementById('activities-tbody');
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>`;
+
+    const params = new URLSearchParams({
+      page: state.page, limit: 20,
+      ...(state.view   && { view: state.view }),
+      ...(state.status && { status: state.status }),
+      ...(state.type   && { type: state.type }),
+    });
+
+    const r = await apiCall(`/activities?${params}`);
+    if (!r || !r.ok) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:30px;">Failed to load</td></tr>`; return; }
+
+    const { data, pagination } = r.data;
+    if (!data.length) {
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><p>Nothing scheduled</p></div></td></tr>`;
+      document.getElementById('activities-pagination').innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = data.map(a => `
+      <tr>
+        <td class="primary"><a href="./orders.html?id=${encodeURIComponent(a.order_ref||'')}" style="color:var(--accent);">${esc(a.order_ref||'—')}</a></td>
+        <td>
+          <div style="font-weight:600;font-size:13px;">${esc(a.customer_name||'—')}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${esc(a.customer_phone||'')}</div>
+        </td>
+        <td style="font-size:13px;">${CRM.ACTIVITY_TYPE_LABELS[a.type]||a.type}</td>
+        <td style="font-size:12px;color:${new Date(a.scheduled_at) < new Date() && a.status==='pending' ? 'var(--danger)' : 'var(--text-dim)'};">${formatDateTime(a.scheduled_at)}</td>
+        <td>${activityStatusBadge(a.status)}</td>
+        <td style="font-size:12px;">${esc(a.assigned_to_name||'Unassigned')}</td>
+        <td>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            ${a.customer_phone ? `<a href="${waLink(a.customer_phone,'Hi, calling from TurboFix regarding order '+(a.order_ref||''))}" target="_blank" class="btn btn-success btn-sm">Call</a>` : ''}
+            ${a.status === 'pending' ? `<button class="btn btn-primary btn-sm" onclick="markDone(${a.id})">Done</button>` : ''}
+            <button class="btn btn-secondary btn-sm" onclick="openActivityModal(${a.id})">Edit</button>
+          </div>
+        </td>
+      </tr>
+    `).join('');
+
+    renderPagination('activities-pagination', pagination, 'goToPage');
+  }
+
+  async function markDone(id) {
+    const r = await apiCall(`/activities/${id}`, { method: 'PATCH', body: JSON.stringify({ status: 'done' }) });
+    if (!r || !r.ok) { showToast(r?.data?.message || 'Failed to update', 'error'); return; }
+    showToast('Marked done', 'success');
+    loadActivities();
+  }
+
+  let editingActivity = null;
+
+  async function openActivityModal(id) {
+    await loadStaff();
+    editingActivity = id || null;
+    document.getElementById('activity-modal-title').textContent = id ? 'Edit Activity' : 'Schedule Activity';
+    document.getElementById('act-id').value = id || '';
+    document.getElementById('act-order-id').value = '';
+    document.getElementById('act-order-id').disabled = false;
+    document.getElementById('act-notes').value = '';
+    document.getElementById('act-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('act-time').value = '10:00';
+    document.getElementById('act-type').value = 'callback';
+    document.getElementById('act-assigned').value = '';
+
+    if (id) {
+      const r = await apiCall(`/activities/${id}`);
+      if (r && r.ok) {
+        const a = r.data.data;
+        document.getElementById('act-order-id').value = a.order_ref || '';
+        document.getElementById('act-order-id').disabled = true;
+        document.getElementById('act-type').value = a.type;
+        document.getElementById('act-assigned').value = a.assigned_to_id || '';
+        document.getElementById('act-notes').value = a.notes || '';
+        const dt = new Date(a.scheduled_at);
+        document.getElementById('act-date').value = dt.toISOString().slice(0,10);
+        document.getElementById('act-time').value = dt.toTimeString().slice(0,5);
+      }
+    }
+    openModal('activity-modal');
+  }
+
+  async function submitActivity() {
+    const id       = document.getElementById('act-id').value;
+    const orderId  = document.getElementById('act-order-id').value.trim();
+    const type     = document.getElementById('act-type').value;
+    const assigned = document.getElementById('act-assigned').value;
+    const date     = document.getElementById('act-date').value;
+    const time     = document.getElementById('act-time').value;
+    const notes    = document.getElementById('act-notes').value.trim();
+
+    if (!date || !time) { showToast('Pick a date and time', 'warn'); return; }
+    const scheduledAt = new Date(`${date}T${time}:00`).toISOString();
+
+    if (id) {
+      const r = await apiCall(`/activities/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ scheduled_at: scheduledAt, notes, assigned_to_id: assigned || null }),
+      });
+      if (!r || !r.ok) { showToast(r?.data?.message || 'Update failed', 'error'); return; }
+      showToast('Activity updated', 'success');
+    } else {
+      if (!orderId) { showToast('Order ID is required', 'warn'); return; }
+      const r = await apiCall('/activities', {
+        method: 'POST',
+        body: JSON.stringify({ order_id: orderId, type, scheduled_at: scheduledAt, notes, assigned_to_id: assigned || null }),
+      });
+      if (!r || !r.ok) { showToast(r?.data?.message || 'Failed to schedule', 'error'); return; }
+      showToast('Activity scheduled', 'success');
+    }
+    closeModal('activity-modal');
+    loadActivities();
+  }
+
+  document.querySelectorAll('.modal-overlay').forEach(el => {
+    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
+  });
+
+  loadActivities();
+</script>
+</body>
+</html>

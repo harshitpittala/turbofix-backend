@@ -12,7 +12,7 @@ const {
 } = require('../controllers/orderController');
 const { sendBookingConfirmation, sendAdminNotification } = require('../services/emailService');
 
-const { authenticate, authorizeAdmin, authorizeStaff } = require('../middleware/auth');
+const { authenticate, authorizeAdmin, authorizeStaff, authorizeAdminOrTelecaller } = require('../middleware/auth');
 const { bookingLimiter } = require('../middleware/rateLimiter');
 const validate  = require('../middleware/validate');
 const upload    = require('../config/multer');
@@ -71,16 +71,16 @@ router.post('/', bookingLimiter, upload.array('images', 5), createRules, validat
 
 // ── Admin endpoints ───────────────────────────────────────────────────────────
 
-// POST /api/orders/manual — admin creates an order directly from the CRM
-router.post('/manual', authenticate, authorizeAdmin, createRules, validate, createOrder);
+// POST /api/orders/manual — owner or telecaller creates an order directly from the CRM
+router.post('/manual', authenticate, authorizeAdminOrTelecaller, createRules, validate, createOrder);
 
-// GET /api/orders/export
+// GET /api/orders/export  (owner-only — contains pricing)
 router.get('/export', authenticate, authorizeAdmin, exportOrders);
 
-// GET /api/orders
-router.get('/', authenticate, authorizeAdmin, getOrders);
+// GET /api/orders  (owner or telecaller — telecaller response has pricing stripped)
+router.get('/', authenticate, authorizeAdminOrTelecaller, getOrders);
 
-// GET /api/orders/:id  (admin/tech can view)
+// GET /api/orders/:id  (admin/telecaller/technician can view; pricing stripped for telecaller)
 router.get('/:id', authenticate, authorizeStaff, getOrderById);
 
 // PATCH /api/orders/:id/status
@@ -89,8 +89,8 @@ const statusRules = [
 ];
 router.patch('/:id/status', authenticate, authorizeStaff, statusRules, validate, updateOrderStatus);
 
-// PATCH /api/orders/:id  (admin — update cost / technician / notes)
-router.patch('/:id', authenticate, authorizeAdmin, updateOrder);
+// PATCH /api/orders/:id  (owner — full update; telecaller — operational fields only, no pricing)
+router.patch('/:id', authenticate, authorizeAdminOrTelecaller, updateOrder);
 
 // POST /api/orders/:id/images
 router.post('/:id/images', authenticate, authorizeAdmin, upload.array('images', 5), addOrderImages);

@@ -51,4 +51,13 @@ const CRM = {
 
   PRIORITY_LABELS: { normal: 'Normal', high: 'High', urgent: 'Urgent' },
   PAYMENT_METHODS: { cash: 'Cash', upi: 'UPI', card: 'Card', bank_transfer: 'Bank Transfer', other: 'Other' },
+
+  ACTIVITY_TYPE_LABELS: {
+    callback:               'Callback',
+    repair_appointment:     'Repair Appointment',
+    follow_up:              'Follow-up',
+    pickup_delivery:        'Pickup / Delivery',
+    post_repair_follow_up:  'Post-Repair Follow-up',
+  },
+  ACTIVITY_STATUS_LABELS: { pending: 'Pending', done: 'Done', cancelled: 'Cancelled' },
 };

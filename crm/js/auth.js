@@ -47,9 +47,21 @@ function renderUserInfo(user) {
 // call; this redirect just keeps the telecaller out of a page that would otherwise render
 // broken (every fetch on it returns 403).
 const OWNER_ONLY_PAGES = [
-  'index.html', '', 'technicians.html', 'payments.html',
+  'index.html', 'technicians.html', 'payments.html',
   'analysis.html', 'workdone.html', 'customer-care-report.html',
 ];
+
+// Normalizes a link href or the current pathname to a bare "page.html" name.
+// Netlify's "Pretty URLs" post-processing rewrites served links from
+// "./index.html" to "/" and "./orders.html" to "/orders" — so raw string
+// comparisons against the source hrefs break in production. This undoes that.
+function normalizePage(raw) {
+  let p = (raw || '').split('?')[0].split('#')[0];
+  p = p.replace(/^\.?\//, ''); // strip a leading "./" or "/"
+  if (p === '') return 'index.html';
+  if (!p.includes('.')) p += '.html'; // pretty URL ("orders" -> "orders.html")
+  return p;
+}
 
 // Hide sidebar links/controls marked for the *other* role. Pages shared between
 // roles (schedules.html) mark owner-only bits with data-owner-only and
@@ -59,8 +71,7 @@ function applyRoleVisibility(user) {
 
   if (telecaller) {
     document.querySelectorAll('.nav-item[href]').forEach((el) => {
-      const href = el.getAttribute('href').replace(/^\.\//, '');
-      if (OWNER_ONLY_PAGES.includes(href)) el.style.display = 'none';
+      if (OWNER_ONLY_PAGES.includes(normalizePage(el.getAttribute('href')))) el.style.display = 'none';
     });
     document.querySelectorAll('[data-owner-only]').forEach((el) => { el.style.display = 'none'; });
   } else {
@@ -70,8 +81,7 @@ function applyRoleVisibility(user) {
 
 function redirectIfOwnerOnlyPage(user) {
   if (user.role !== 'telecaller') return false;
-  const page = window.location.pathname.split('/').pop();
-  if (OWNER_ONLY_PAGES.includes(page)) {
+  if (OWNER_ONLY_PAGES.includes(normalizePage(window.location.pathname))) {
     window.location.href = './telecaller-dashboard.html';
     return true;
   }

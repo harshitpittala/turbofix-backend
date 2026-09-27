@@ -66,6 +66,10 @@
         </div>
       </div>
       <div class="header-right">
+        <button class="btn btn-secondary btn-sm" onclick="window.location='./schedules.html'">
+          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+          New Lead / Reminder
+        </button>
         <button class="btn btn-primary btn-sm" onclick="window.location='./orders.html'">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
           New Order
@@ -150,11 +154,12 @@
     el.innerHTML = items.map(a => `
       <div class="queue-item">
         <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:600;color:var(--text);">${esc(a.customer_name || 'Unknown')} · ${CRM.ACTIVITY_TYPE_LABELS[a.type] || a.type}</div>
-          <div style="font-size:11px;color:var(--text-muted);">${esc(a.order_ref || '')} · ${formatDateTime(a.scheduled_at)}</div>
+          <div style="font-size:13px;font-weight:600;color:var(--text);">${esc(a.customer_name || 'Unnamed lead')} · ${CRM.ACTIVITY_TYPE_LABELS[a.type] || a.type}</div>
+          <div style="font-size:11px;color:var(--text-muted);">${esc(a.order_ref || a.customer_phone || '')} · ${formatDateTime(a.scheduled_at)}</div>
         </div>
-        <a href="${waLink(a.customer_phone || '', 'Hi, calling from TurboFix regarding order ' + (a.order_ref || ''))}" target="_blank" class="btn btn-success btn-sm">Call</a>
-        <a href="./orders.html?id=${encodeURIComponent(a.order_ref || '')}" class="btn btn-secondary btn-sm">Open</a>
+        ${a.customer_phone ? `<a href="tel:${esc(a.customer_phone)}" class="btn btn-secondary btn-sm" title="Call">📞</a>` : ''}
+        ${a.customer_phone ? `<a href="${waLink(a.customer_phone, 'Hi, calling from TurboFix' + (a.order_ref ? ' regarding order ' + a.order_ref : ''))}" target="_blank" class="btn btn-success btn-sm">WA</a>` : ''}
+        <a href="${a.order_ref ? './orders.html?id=' + encodeURIComponent(a.order_ref) : './schedules.html'}" class="btn btn-secondary btn-sm">Open</a>
       </div>
     `).join('');
   }

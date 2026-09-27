@@ -122,17 +122,16 @@
               <th>Order ID</th>
               <th>Customer</th>
               <th>Device</th>
-              <th>Service</th>
               <th>Status</th>
-              <th>Priority</th>
               <th>Technician</th>
+              <th>Customer Care</th>
               <th data-owner-only>Est. Cost</th>
               <th>Date</th>
               <th>Actions</th>
             </tr>
           </thead>
           <tbody id="orders-tbody">
-            <tr><td colspan="10" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>
+            <tr><td colspan="9" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>
           </tbody>
         </table>
       </div>
@@ -365,6 +364,8 @@
   // Check URL param for direct order open
   const urlParams = new URLSearchParams(window.location.search);
   if (urlParams.get('id')) setTimeout(() => openOrderDetail(urlParams.get('id')), 400);
+  let pendingLeadId = urlParams.get('lead') || null;
+  if (pendingLeadId) setTimeout(() => openAddOrderModal(), 400);
 
   async function loadOrders() {
     const tbody = document.getElementById('orders-tbody');
@@ -387,7 +388,7 @@
     data.forEach(o => { ordersCache[o.id] = o; });
 
     if (!data.length) {
-      tbody.innerHTML = `<tr><td colspan="10"><div class="empty-state"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg><p>No orders found</p></div></td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg><p>No orders found</p></div></td></tr>`;
       document.getElementById('orders-pagination').innerHTML = '';
       return;
     }
@@ -405,14 +406,13 @@
           <div style="font-size:13px;color:var(--text);">${esc(o.device_brand)}</div>
           <div style="font-size:11px;color:var(--text-muted);">${esc(o.device_model)}</div>
         </td>
-        <td style="font-size:12px;">${esc(o.service_type==='pickup'?'Pickup':'Walk-in')}</td>
         <td>${statusBadge(o.status)}</td>
-        <td>${priorityBadge(o.priority||'normal')}</td>
         <td>
           ${o.technician_name
             ? `<div style="display:flex;align-items:center;gap:6px;">${techAvatar(o.technician_name, o.avatar_color,24)}<span style="font-size:12px;">${esc(o.technician_name)}</span></div>`
             : `<span style="color:var(--text-muted);font-size:12px;">Unassigned</span>`}
         </td>
+        <td style="font-size:12px;${o.customer_care_name ? 'color:var(--accent);font-weight:600;' : 'color:var(--text-muted);'}">${esc(o.customer_care_name||'Unassigned')}</td>
         ${currentUser.role !== 'telecaller' ? `<td style="font-size:13px;font-weight:600;color:var(--text);">${formatCurrency(o.estimated_cost)}</td>` : ''}
         <td style="font-size:12px;color:var(--text-muted);">${formatDate(o.created_at)}</td>
         <td>
@@ -459,7 +459,7 @@
           <div class="info-grid">
             <div class="info-item"><div class="info-label">Name</div><div class="info-value">${esc(o.customer_name||'—')}</div></div>
             <div class="info-item"><div class="info-label">Phone</div><div class="info-value">
-              <a href="${waLink(o.customer_phone||'','Hi, regarding your TurboFix repair order '+o.order_id)}" target="_blank" style="color:var(--success);">${esc(o.customer_phone||'—')}</a>
+              ${o.customer_phone ? `<a href="tel:${esc(o.customer_phone)}" style="color:var(--text);margin-right:8px;">${esc(o.customer_phone)}</a><a href="${waLink(o.customer_phone,'Hi, regarding your TurboFix repair order '+o.order_id)}" target="_blank" style="color:var(--success);">WhatsApp</a>` : '—'}
             </div></div>
             <div class="info-item"><div class="info-label">Email</div><div class="info-value">${esc(o.customer_email||'—')}</div></div>
             <div class="info-item"><div class="info-label">Address</div><div class="info-value">${esc(o.customer_address||'—')}</div></div>
@@ -534,7 +534,7 @@
       <div class="card card-sm" style="margin-bottom:16px;">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
           <div class="card-title" style="font-size:13px;">Schedules & Follow-ups</div>
-          <a href="./schedules.html" class="btn btn-secondary btn-sm">+ Schedule</a>
+          <a href="./schedules.html?order=${encodeURIComponent(o.order_id)}" class="btn btn-secondary btn-sm">+ Schedule</a>
         </div>
         ${o.activities && o.activities.length ? `
           <ul class="timeline">
@@ -777,6 +777,33 @@
     document.getElementById('ao-service-type').value = 'walk-in';
     document.getElementById('ao-priority').value = 'normal';
     document.querySelectorAll('#ao-services input[type="checkbox"]').forEach(cb => cb.checked = false);
+
+    // Arriving from a converted lead (Schedules → "Create Order")? Pre-fill
+    // what the telecaller already captured so nothing has to be retyped.
+    if (pendingLeadId) {
+      const r = await apiCall(`/activities/${pendingLeadId}`);
+      if (r && r.ok) {
+        const lead = r.data.data;
+        document.getElementById('ao-name').value = lead.customer_name || '';
+        document.getElementById('ao-phone').value = lead.customer_phone || '';
+        if (lead.device_brand) {
+          document.getElementById('ao-brand').value = 'Other';
+          document.getElementById('ao-brand-other').style.display = '';
+          document.getElementById('ao-brand-other').value = lead.device_brand;
+        }
+        if (lead.device_model) {
+          document.getElementById('ao-model-other').disabled = false;
+          document.getElementById('ao-model-other').value = lead.device_model;
+        }
+        if (lead.service) document.getElementById('ao-service-other').value = lead.service;
+        if (lead.notes) document.getElementById('ao-issue').value = lead.notes;
+        if (lead.assigned_to_id) {
+          document.getElementById('ao-cc').value = lead.assigned_to_id;
+        }
+        showToast('Lead details loaded — finish the device & services, then create the order', 'info');
+      }
+    }
+
     openModal('add-order-modal');
   }
 
@@ -819,7 +846,20 @@
     const r = await apiCall('/orders/manual', { method: 'POST', body: JSON.stringify(payload) });
     if (!r || !r.ok) { showToast(r?.data?.message || 'Failed to create order', 'error'); return; }
 
-    showToast(`Order ${r.data.data.order_id} created`, 'success');
+    const newOrderId = r.data.data.order_id;
+    showToast(`Order ${newOrderId} created`, 'success');
+
+    // If this order came from a converted lead, close the loop: link the
+    // reminder to the new order and mark it done so it drops off the queues.
+    if (pendingLeadId) {
+      await apiCall(`/activities/${pendingLeadId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ order_id: newOrderId, status: 'done', notes: `Converted to order ${newOrderId}` }),
+      });
+      pendingLeadId = null;
+      window.history.replaceState({}, '', './orders.html');
+    }
+
     closeModal('add-order-modal');
     loadOrders();
   }

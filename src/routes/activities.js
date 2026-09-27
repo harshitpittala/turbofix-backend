@@ -11,8 +11,9 @@ const { createActivity, getActivities, getActivityById, updateActivity, ACTIVITY
 const { authenticate, authorizeAdminOrTelecaller } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 
+// order_id is optional (a lead callback has no order yet); the controller
+// enforces that phone is present whenever order_id is omitted.
 const createRules = [
-  body('order_id').notEmpty().withMessage('order_id is required'),
   body('type').isIn(ACTIVITY_TYPES).withMessage(`type must be one of: ${ACTIVITY_TYPES.join(', ')}`),
   body('scheduled_at').notEmpty().withMessage('scheduled_at is required'),
 ];

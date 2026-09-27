@@ -136,10 +136,14 @@ CREATE TABLE IF NOT EXISTS order_status_history (
 
 CREATE INDEX IF NOT EXISTS idx_order_status_history_order ON order_status_history (order_id);
 
--- ── Order Activities — schedules & follow-ups ──────────────────────
+-- ── Order Activities — schedules, follow-ups & lead callbacks ──────
+-- order_id is nullable: a telecaller can log "call this prospect back
+-- tomorrow" before any order exists, using the customer_name/phone/device_*
+-- columns below. Once an order is linked, order_id + the joined customer's
+-- own record are used instead.
 CREATE TABLE IF NOT EXISTS order_activities (
   id              SERIAL        PRIMARY KEY,
-  order_id        INTEGER       NOT NULL REFERENCES repair_orders(id) ON DELETE CASCADE,
+  order_id        INTEGER       NULL REFERENCES repair_orders(id) ON DELETE CASCADE,
   type            VARCHAR(30)   NOT NULL
                                 CHECK (type IN (
                                   'callback', 'repair_appointment', 'follow_up',
@@ -153,11 +157,17 @@ CREATE TABLE IF NOT EXISTS order_activities (
   created_by_id   INTEGER       NULL REFERENCES admins(id) ON DELETE SET NULL,
   created_by_name VARCHAR(100),
   completed_at    TIMESTAMPTZ   NULL,
+  customer_name   VARCHAR(100),
+  phone           VARCHAR(20),
+  device_brand    VARCHAR(60),
+  device_model    VARCHAR(120),
+  service         VARCHAR(150),
   created_at      TIMESTAMPTZ   DEFAULT NOW(),
   updated_at      TIMESTAMPTZ   DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_order_activities_order     ON order_activities (order_id);
+CREATE INDEX IF NOT EXISTS idx_order_activities_phone     ON order_activities (phone);
 CREATE INDEX IF NOT EXISTS idx_order_activities_scheduled ON order_activities (scheduled_at);
 CREATE INDEX IF NOT EXISTS idx_order_activities_status    ON order_activities (status);
 CREATE INDEX IF NOT EXISTS idx_order_activities_assigned  ON order_activities (assigned_to_id);

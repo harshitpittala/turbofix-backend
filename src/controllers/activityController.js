@@ -1,9 +1,13 @@
 /**
- * activityController.js — order-linked schedules & follow-ups
+ * activityController.js — schedules, follow-ups & lead callbacks
  * (callback, repair appointment, follow-up, pickup/delivery, post-repair follow-up)
  *
- * Available to owner and telecaller roles. Carries no pricing data, so no
- * role-based redaction is needed here (unlike orderController).
+ * An activity is either order-linked (order_id set — a confirmed repair)
+ * or a standalone lead/callback reminder (order_id null, using the
+ * customer_name/phone/device_* columns directly) for a prospect who hasn't
+ * confirmed a repair yet. Available to owner and telecaller roles. Carries
+ * no pricing data, so no role-based redaction is needed here (unlike
+ * orderController).
  */
 
 const pool = require('../config/database');
@@ -19,10 +23,28 @@ const resolveOrderDbId = async (client, orderIdOrDbId) => {
   return rows.length ? rows[0].id : null;
 };
 
+const resolveAssignedId = async (assignedToId) => {
+  if (!assignedToId) return null;
+  const { rows } = await pool.query(
+    `SELECT id FROM admins WHERE id = $1 AND is_active = true AND role IN ('admin','super_admin','telecaller')`,
+    [assignedToId]
+  );
+  if (!rows.length) {
+    const err = new Error('Invalid assigned_to_id');
+    err.status = 400;
+    throw err;
+  }
+  return rows[0].id;
+};
+
 // POST /api/activities
+// order_id is optional — a lead callback (no order yet) requires `phone` instead.
 const createActivity = async (req, res, next) => {
   try {
-    const { order_id, type, scheduled_at, notes, assigned_to_id } = req.body;
+    const {
+      order_id, type, scheduled_at, notes, assigned_to_id,
+      customer_name, phone, device_brand, device_model, service,
+    } = req.body;
 
     if (!ACTIVITY_TYPES.includes(type)) {
       return res.status(400).json({ success: false, message: `type must be one of: ${ACTIVITY_TYPES.join(', ')}` });
@@ -31,27 +53,27 @@ const createActivity = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'scheduled_at is required' });
     }
 
-    const dbOrderId = await resolveOrderDbId(pool, order_id);
-    if (!dbOrderId) return res.status(404).json({ success: false, message: 'Order not found' });
-
-    let assignedId = null;
-    if (assigned_to_id) {
-      const { rows } = await pool.query(
-        `SELECT id FROM admins WHERE id = $1 AND is_active = true AND role IN ('admin','super_admin','telecaller')`,
-        [assigned_to_id]
-      );
-      if (!rows.length) return res.status(400).json({ success: false, message: 'Invalid assigned_to_id' });
-      assignedId = rows[0].id;
+    let dbOrderId = null;
+    if (order_id) {
+      dbOrderId = await resolveOrderDbId(pool, order_id);
+      if (!dbOrderId) return res.status(404).json({ success: false, message: 'Order not found' });
+    } else if (!phone) {
+      return res.status(400).json({ success: false, message: 'phone is required when this reminder is not linked to an order' });
     }
 
+    const assignedId = await resolveAssignedId(assigned_to_id);
     const { id: userId, name: userName } = req.user;
 
     const { rows: [activity] } = await pool.query(
       `INSERT INTO order_activities
-        (order_id, type, scheduled_at, notes, assigned_to_id, created_by_id, created_by_name)
-       VALUES ($1, $2, $3, $4, $5, $6, $7)
+        (order_id, type, scheduled_at, notes, assigned_to_id, created_by_id, created_by_name,
+         customer_name, phone, device_brand, device_model, service)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
-      [dbOrderId, type, scheduled_at, notes || null, assignedId, userId, userName || 'Staff']
+      [
+        dbOrderId, type, scheduled_at, notes || null, assignedId, userId, userName || 'Staff',
+        customer_name || null, phone || null, device_brand || null, device_model || null, service || null,
+      ]
     );
 
     await pool.query(
@@ -60,17 +82,17 @@ const createActivity = async (req, res, next) => {
       [activity.id, activity.status, activity.scheduled_at, notes || null, userId, userName || 'Staff']
     );
 
-    res.status(201).json({ success: true, message: 'Activity scheduled', data: activity });
+    res.status(201).json({ success: true, message: 'Reminder scheduled', data: activity });
   } catch (err) {
     next(err);
   }
 };
 
-// GET /api/activities?view=today|upcoming|overdue&status=&type=&assigned_to_id=&order_id=
+// GET /api/activities?view=today|upcoming|overdue&status=&type=&assigned_to_id=&order_id=&search=
 const getActivities = async (req, res, next) => {
   try {
     const {
-      view, status, type, assigned_to_id, order_id,
+      view, status, type, assigned_to_id, order_id, search,
       page = 1, limit = 50,
     } = req.query;
 
@@ -85,6 +107,14 @@ const getActivities = async (req, res, next) => {
       const dbOrderId = await resolveOrderDbId(pool, order_id);
       conditions.push(`oa.order_id = $${params.length + 1}`); params.push(dbOrderId || -1);
     }
+    if (search) {
+      const s = `%${search}%`;
+      conditions.push(
+        `(oa.customer_name ILIKE $${params.length + 1} OR oa.phone ILIKE $${params.length + 2}
+          OR c.name ILIKE $${params.length + 3} OR c.phone ILIKE $${params.length + 4})`
+      );
+      params.push(s, s, s, s);
+    }
 
     if (view === 'today') {
       conditions.push(`oa.scheduled_at::date = CURRENT_DATE`, `oa.status = 'pending'`);
@@ -97,12 +127,19 @@ const getActivities = async (req, res, next) => {
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const { rows: countRows } = await pool.query(
-      `SELECT COUNT(*) AS total FROM order_activities oa ${where}`, params
+      `SELECT COUNT(*) AS total
+       FROM order_activities oa
+       LEFT JOIN repair_orders ro ON oa.order_id = ro.id
+       LEFT JOIN customers c      ON ro.customer_id = c.id
+       ${where}`,
+      params
     );
     const total = parseInt(countRows[0].total);
 
     const { rows } = await pool.query(
-      `SELECT oa.*, ro.order_id AS order_ref, c.name AS customer_name, c.phone AS customer_phone,
+      `SELECT oa.*, ro.order_id AS order_ref,
+              COALESCE(oa.customer_name, c.name)  AS customer_name,
+              COALESCE(oa.phone, c.phone)         AS customer_phone,
               a.name AS assigned_to_name
        FROM order_activities oa
        LEFT JOIN repair_orders ro ON oa.order_id = ro.id
@@ -128,7 +165,9 @@ const getActivities = async (req, res, next) => {
 const getActivityById = async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `SELECT oa.*, ro.order_id AS order_ref, c.name AS customer_name, c.phone AS customer_phone,
+      `SELECT oa.*, ro.order_id AS order_ref,
+              COALESCE(oa.customer_name, c.name)  AS customer_name,
+              COALESCE(oa.phone, c.phone)         AS customer_phone,
               a.name AS assigned_to_name
        FROM order_activities oa
        LEFT JOIN repair_orders ro ON oa.order_id = ro.id
@@ -150,11 +189,14 @@ const getActivityById = async (req, res, next) => {
   }
 };
 
-// PATCH /api/activities/:id  (reschedule / edit notes / reassign / mark done or cancelled)
+// PATCH /api/activities/:id  (reschedule / edit lead details / reassign / link an order / mark done or cancelled)
 const updateActivity = async (req, res, next) => {
   try {
     const { id } = req.params;
-    const { scheduled_at, notes, assigned_to_id, status } = req.body;
+    const {
+      scheduled_at, notes, assigned_to_id, status, order_id, type,
+      customer_name, phone, device_brand, device_model, service,
+    } = req.body;
     const { id: userId, name: userName } = req.user;
 
     const { rows } = await pool.query('SELECT * FROM order_activities WHERE id = $1', [id]);
@@ -164,33 +206,45 @@ const updateActivity = async (req, res, next) => {
     if (status !== undefined && !ACTIVITY_STATUSES.includes(status)) {
       return res.status(400).json({ success: false, message: `status must be one of: ${ACTIVITY_STATUSES.join(', ')}` });
     }
+    if (type !== undefined && !ACTIVITY_TYPES.includes(type)) {
+      return res.status(400).json({ success: false, message: `type must be one of: ${ACTIVITY_TYPES.join(', ')}` });
+    }
 
     let assignedId;
     if (assigned_to_id !== undefined) {
-      if (assigned_to_id === null || assigned_to_id === '') {
-        assignedId = null;
+      assignedId = (assigned_to_id === null || assigned_to_id === '') ? null : await resolveAssignedId(assigned_to_id);
+    }
+
+    let dbOrderId;
+    if (order_id !== undefined) {
+      if (order_id === null || order_id === '') {
+        dbOrderId = null;
       } else {
-        const { rows: staff } = await pool.query(
-          `SELECT id FROM admins WHERE id = $1 AND is_active = true AND role IN ('admin','super_admin','telecaller')`,
-          [assigned_to_id]
-        );
-        if (!staff.length) return res.status(400).json({ success: false, message: 'Invalid assigned_to_id' });
-        assignedId = staff[0].id;
+        dbOrderId = await resolveOrderDbId(pool, order_id);
+        if (!dbOrderId) return res.status(404).json({ success: false, message: 'Order not found' });
       }
     }
 
     // Build the SET list dynamically (same pattern as orderController.updateOrderStatus)
-    // rather than COALESCE, since assigned_to_id/completed_at must support being
-    // explicitly cleared back to null — not just "leave unchanged when omitted".
+    // rather than COALESCE, since assigned_to_id/order_id/completed_at must support
+    // being explicitly cleared back to null — not just "leave unchanged when omitted".
     const setFields = [];
     const setParams = [];
+    const push = (col, val) => { setFields.push(`${col} = $${setParams.length + 1}`); setParams.push(val); };
 
-    if (scheduled_at) { setFields.push(`scheduled_at = $${setParams.length + 1}`); setParams.push(scheduled_at); }
-    if (notes !== undefined) { setFields.push(`notes = $${setParams.length + 1}`); setParams.push(notes || null); }
-    if (assigned_to_id !== undefined) { setFields.push(`assigned_to_id = $${setParams.length + 1}`); setParams.push(assignedId); }
+    if (scheduled_at) push('scheduled_at', scheduled_at);
+    if (notes !== undefined) push('notes', notes || null);
+    if (type !== undefined) push('type', type);
+    if (assigned_to_id !== undefined) push('assigned_to_id', assignedId);
+    if (order_id !== undefined) push('order_id', dbOrderId);
+    if (customer_name !== undefined) push('customer_name', customer_name || null);
+    if (phone !== undefined) push('phone', phone || null);
+    if (device_brand !== undefined) push('device_brand', device_brand || null);
+    if (device_model !== undefined) push('device_model', device_model || null);
+    if (service !== undefined) push('service', service || null);
     if (status !== undefined) {
-      setFields.push(`status = $${setParams.length + 1}`); setParams.push(status);
-      setFields.push(`completed_at = $${setParams.length + 1}`); setParams.push(status === 'done' ? new Date() : null);
+      push('status', status);
+      push('completed_at', status === 'done' ? new Date() : null);
     }
 
     if (!setFields.length) return res.status(400).json({ success: false, message: 'No fields to update' });
@@ -217,7 +271,7 @@ const updateActivity = async (req, res, next) => {
       );
     }
 
-    res.json({ success: true, message: 'Activity updated', data: updated });
+    res.json({ success: true, message: 'Reminder updated', data: updated });
   } catch (err) {
     next(err);
   }

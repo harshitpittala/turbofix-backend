@@ -125,7 +125,7 @@
               <th>Status</th>
               <th>Technician</th>
               <th>Customer Care</th>
-              <th data-owner-only>Est. Cost</th>
+              <th>Est. Cost</th>
               <th>Date</th>
               <th>Actions</th>
             </tr>
@@ -286,18 +286,45 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Services *</label>
-        <div id="ao-services" style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;">
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Screen Replacement" /> Screen Replacement</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Battery Replacement" /> Battery Replacement</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Camera Module" /> Camera Module</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Water Damage" /> Water Damage</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Speaker / Mic" /> Speaker / Mic</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Charging Port" /> Charging Port</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Back Panel" /> Back Panel</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Software / Data" /> Software / Data</label>
+        <label class="form-label">Services & Quoted Cost per Issue *</label>
+        <div id="ao-services" style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Screen Replacement" onchange="recalcAddOrderCost()" /> Screen Replacement</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Battery Replacement" onchange="recalcAddOrderCost()" /> Battery Replacement</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Camera Module" onchange="recalcAddOrderCost()" /> Camera Module</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Water Damage" onchange="recalcAddOrderCost()" /> Water Damage</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Speaker / Mic" onchange="recalcAddOrderCost()" /> Speaker / Mic</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Charging Port" onchange="recalcAddOrderCost()" /> Charging Port</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Back Panel" onchange="recalcAddOrderCost()" /> Back Panel</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Software / Data" onchange="recalcAddOrderCost()" /> Software / Data</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
         </div>
-        <input type="text" class="form-control" id="ao-service-other" placeholder="Other service (optional)" style="margin-top:8px;" />
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+          <input type="text" class="form-control" id="ao-service-other" placeholder="Other service (optional)" style="flex:1;" oninput="recalcAddOrderCost()" />
+          <input type="number" class="form-control" id="ao-service-other-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Issue Description</label>
@@ -332,9 +359,9 @@
           <input type="text" class="form-control" id="ao-time" placeholder="e.g. 10:00 AM – 12:00 PM" />
         </div>
       </div>
-      <div class="form-group" id="ao-cost-group" data-owner-only>
-        <label class="form-label">Estimated Cost (₹)</label>
-        <input type="number" class="form-control" id="ao-cost" placeholder="0.00" min="0" step="0.01" />
+      <div class="form-group" id="ao-cost-group">
+        <label class="form-label">Estimated Cost (₹) — total of the amounts entered above</label>
+        <input type="number" class="form-control" id="ao-cost" placeholder="0.00" min="0" step="0.01" readonly style="background:var(--surface2);font-weight:700;" />
       </div>
       <div class="form-group">
         <label class="form-label">Customer Care</label>
@@ -413,7 +440,7 @@
             : `<span style="color:var(--text-muted);font-size:12px;">Unassigned</span>`}
         </td>
         <td style="font-size:12px;${o.customer_care_name ? 'color:var(--accent);font-weight:600;' : 'color:var(--text-muted);'}">${esc(o.customer_care_name||'Unassigned')}</td>
-        ${currentUser.role !== 'telecaller' ? `<td style="font-size:13px;font-weight:600;color:var(--text);">${formatCurrency(o.estimated_cost)}</td>` : ''}
+        <td style="font-size:13px;font-weight:600;color:var(--text);">${formatCurrency(o.estimated_cost)}</td>
         <td style="font-size:12px;color:var(--text-muted);">${formatDate(o.created_at)}</td>
         <td>
           <div style="display:flex;gap:6px;">
@@ -476,7 +503,7 @@
             <div class="info-item"><div class="info-label">Priority</div><div class="info-value">${priorityBadge(o.priority)}</div></div>
             <div class="info-item"><div class="info-label">Service Type</div><div class="info-value">${o.service_type}</div></div>
             ${o.scheduled_date ? `<div class="info-item"><div class="info-label">Scheduled</div><div class="info-value">${formatDate(o.scheduled_date)} ${o.scheduled_time||''}</div></div>` : ''}
-            ${'estimated_cost' in o ? `<div class="info-item"><div class="info-label">Est. Cost</div><div class="info-value">${formatCurrency(o.estimated_cost)}</div></div>` : ''}
+            ${'estimated_cost' in o ? `<div class="info-item"><div class="info-label">Est. Cost</div><div class="info-value">${formatCurrency(o.estimated_cost)}${(o.service_estimates||[]).length ? `<div style="font-weight:400;font-size:11px;color:var(--text-muted);margin-top:2px;">${o.service_estimates.map(e=>`${esc(e.service)}: ${formatCurrency(e.cost)}`).join(' · ')}</div>` : ''}</div></div>` : ''}
             ${'actual_cost' in o ? `<div class="info-item"><div class="info-label">Actual Cost</div><div class="info-value">${formatCurrency(o.actual_cost)}</div></div>` : ''}
             <div class="info-item"><div class="info-label">Warranty</div><div class="info-value">${o.warranty_months} months</div></div>
             <div class="info-item"><div class="info-label">IMEI</div><div class="info-value">${esc(o.imei_number||'—')}</div></div>
@@ -760,8 +787,45 @@
     return document.getElementById('ao-model-other').value.trim();
   }
 
+  // Shows/hides each service's cost input based on whether it's checked
+  // (or, for "Other", whether text was typed), then sums everything visible
+  // into the read-only Estimated Cost total — this is how a telecaller quotes
+  // a customer with two or more problems on one device.
+  function recalcAddOrderCost() {
+    let total = 0;
+    document.querySelectorAll('#ao-services .service-row').forEach(row => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      const costInput = row.querySelector('.service-cost');
+      costInput.style.display = cb.checked ? '' : 'none';
+      if (!cb.checked) costInput.value = '';
+      else total += parseFloat(costInput.value) || 0;
+    });
+
+    const otherService = document.getElementById('ao-service-other').value.trim();
+    const otherCost = document.getElementById('ao-service-other-cost');
+    otherCost.style.display = otherService ? '' : 'none';
+    if (!otherService) otherCost.value = '';
+    else total += parseFloat(otherCost.value) || 0;
+
+    document.getElementById('ao-cost').value = total ? total.toFixed(2) : '';
+  }
+
+  // [{ service, cost }] for every checked/typed service that has a cost entered.
+  function getAddOrderServiceEstimates() {
+    const estimates = [];
+    document.querySelectorAll('#ao-services .service-row').forEach(row => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      const cost = parseFloat(row.querySelector('.service-cost').value);
+      if (cb.checked && Number.isFinite(cost) && cost >= 0) estimates.push({ service: cb.value, cost });
+    });
+    const otherService = document.getElementById('ao-service-other').value.trim();
+    const otherCost = parseFloat(document.getElementById('ao-service-other-cost').value);
+    if (otherService && Number.isFinite(otherCost) && otherCost >= 0) estimates.push({ service: otherService, cost: otherCost });
+    return estimates;
+  }
+
   async function openAddOrderModal() {
-    ['ao-name','ao-phone','ao-email','ao-address','ao-brand-other','ao-model-other','ao-service-other','ao-issue','ao-date','ao-time','ao-cost']
+    ['ao-name','ao-phone','ao-email','ao-address','ao-brand-other','ao-model-other','ao-service-other','ao-service-other-cost','ao-issue','ao-date','ao-time','ao-cost']
       .forEach(id => document.getElementById(id).value = '');
     await loadStaff();
     const ccSel = document.getElementById('ao-cc');
@@ -777,6 +841,8 @@
     document.getElementById('ao-service-type').value = 'walk-in';
     document.getElementById('ao-priority').value = 'normal';
     document.querySelectorAll('#ao-services input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#ao-services .service-cost').forEach(inp => { inp.value = ''; inp.style.display = 'none'; });
+    document.getElementById('ao-service-other-cost').style.display = 'none';
 
     // Arriving from a converted lead (Schedules → "Create Order")? Pre-fill
     // what the telecaller already captured so nothing has to be retyped.
@@ -804,6 +870,7 @@
       }
     }
 
+    recalcAddOrderCost();
     openModal('add-order-modal');
   }
 
@@ -840,6 +907,7 @@
       service_type: serviceType, pickup_address: address || undefined,
       scheduled_date: date || undefined, scheduled_time: time || undefined,
       priority, estimated_cost: cost || undefined,
+      service_estimates: getAddOrderServiceEstimates(),
       customer_care_id: cc || undefined,
     };
 

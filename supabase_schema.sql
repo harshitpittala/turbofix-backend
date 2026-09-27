@@ -91,6 +91,7 @@ CREATE TABLE IF NOT EXISTS repair_orders (
   priority         VARCHAR(10)   NOT NULL DEFAULT 'normal'
                                  CHECK (priority IN ('normal', 'high', 'urgent')),
   estimated_cost   DECIMAL(10,2) NULL,
+  service_estimates JSONB        DEFAULT '[]', -- [{ service, cost }] breakdown behind estimated_cost
   actual_cost      DECIMAL(10,2) NULL,
   admin_notes      TEXT,
   technician_notes TEXT,

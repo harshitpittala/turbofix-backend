@@ -265,18 +265,45 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Services *</label>
-        <div id="ao-services" style="display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;">
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Screen Replacement" /> Screen Replacement</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Battery Replacement" /> Battery Replacement</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Camera Module" /> Camera Module</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Water Damage" /> Water Damage</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Speaker / Mic" /> Speaker / Mic</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Charging Port" /> Charging Port</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Back Panel" /> Back Panel</label>
-          <label style="display:flex;align-items:center;gap:6px;"><input type="checkbox" value="Software / Data" /> Software / Data</label>
+        <label class="form-label">Services & Quoted Cost per Issue *</label>
+        <div id="ao-services" style="display:flex;flex-direction:column;gap:4px;font-size:13px;">
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Screen Replacement" onchange="recalcAddOrderCost()" /> Screen Replacement</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Battery Replacement" onchange="recalcAddOrderCost()" /> Battery Replacement</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Camera Module" onchange="recalcAddOrderCost()" /> Camera Module</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Water Damage" onchange="recalcAddOrderCost()" /> Water Damage</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Speaker / Mic" onchange="recalcAddOrderCost()" /> Speaker / Mic</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Charging Port" onchange="recalcAddOrderCost()" /> Charging Port</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Back Panel" onchange="recalcAddOrderCost()" /> Back Panel</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
+          <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+            <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="Software / Data" onchange="recalcAddOrderCost()" /> Software / Data</label>
+            <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+          </div>
         </div>
-        <input type="text" class="form-control" id="ao-service-other" placeholder="Other service (optional)" style="margin-top:8px;" />
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+          <input type="text" class="form-control" id="ao-service-other" placeholder="Other service (optional)" style="flex:1;" oninput="recalcAddOrderCost()" />
+          <input type="number" class="form-control" id="ao-service-other-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcAddOrderCost()" />
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Issue Description</label>
@@ -312,8 +339,8 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Estimated Cost (₹)</label>
-        <input type="number" class="form-control" id="ao-cost" placeholder="0.00" min="0" step="0.01" />
+        <label class="form-label">Estimated Cost (₹) — total of the amounts entered above</label>
+        <input type="number" class="form-control" id="ao-cost" placeholder="0.00" min="0" step="0.01" readonly style="background:var(--surface2);font-weight:700;" />
       </div>
       <div class="form-group">
         <label class="form-label">Customer Care</label>
@@ -513,6 +540,43 @@
     return document.getElementById('ao-model-other').value.trim();
   }
 
+  // Shows/hides each service's cost input based on whether it's checked
+  // (or, for "Other", whether text was typed), then sums everything visible
+  // into the read-only Estimated Cost total — this is how you quote a
+  // customer with two or more problems on one device.
+  function recalcAddOrderCost() {
+    let total = 0;
+    document.querySelectorAll('#ao-services .service-row').forEach(row => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      const costInput = row.querySelector('.service-cost');
+      costInput.style.display = cb.checked ? '' : 'none';
+      if (!cb.checked) costInput.value = '';
+      else total += parseFloat(costInput.value) || 0;
+    });
+
+    const otherService = document.getElementById('ao-service-other').value.trim();
+    const otherCost = document.getElementById('ao-service-other-cost');
+    otherCost.style.display = otherService ? '' : 'none';
+    if (!otherService) otherCost.value = '';
+    else total += parseFloat(otherCost.value) || 0;
+
+    document.getElementById('ao-cost').value = total ? total.toFixed(2) : '';
+  }
+
+  // [{ service, cost }] for every checked/typed service that has a cost entered.
+  function getAddOrderServiceEstimates() {
+    const estimates = [];
+    document.querySelectorAll('#ao-services .service-row').forEach(row => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      const cost = parseFloat(row.querySelector('.service-cost').value);
+      if (cb.checked && Number.isFinite(cost) && cost >= 0) estimates.push({ service: cb.value, cost });
+    });
+    const otherService = document.getElementById('ao-service-other').value.trim();
+    const otherCost = parseFloat(document.getElementById('ao-service-other-cost').value);
+    if (otherService && Number.isFinite(otherCost) && otherCost >= 0) estimates.push({ service: otherService, cost: otherCost });
+    return estimates;
+  }
+
   let staffList = [];
   async function loadStaff() {
     if (staffList.length) return;
@@ -521,7 +585,7 @@
   }
 
   async function openAddOrderModal() {
-    ['ao-name','ao-phone','ao-email','ao-address','ao-brand-other','ao-model-other','ao-service-other','ao-issue','ao-date','ao-time','ao-cost']
+    ['ao-name','ao-phone','ao-email','ao-address','ao-brand-other','ao-model-other','ao-service-other','ao-service-other-cost','ao-issue','ao-date','ao-time','ao-cost']
       .forEach(id => document.getElementById(id).value = '');
     await loadStaff();
     document.getElementById('ao-cc').innerHTML = '<option value="">Unassigned</option>' +
@@ -536,6 +600,8 @@
     document.getElementById('ao-service-type').value = 'walk-in';
     document.getElementById('ao-priority').value = 'normal';
     document.querySelectorAll('#ao-services input[type="checkbox"]').forEach(cb => cb.checked = false);
+    document.querySelectorAll('#ao-services .service-cost').forEach(inp => { inp.value = ''; inp.style.display = 'none'; });
+    document.getElementById('ao-service-other-cost').style.display = 'none';
     openModal('add-order-modal');
   }
 
@@ -572,6 +638,7 @@
       service_type: serviceType, pickup_address: address || undefined,
       scheduled_date: date || undefined, scheduled_time: time || undefined,
       priority, estimated_cost: cost || undefined,
+      service_estimates: getAddOrderServiceEstimates(),
       customer_care_id: cc || undefined,
     };
 

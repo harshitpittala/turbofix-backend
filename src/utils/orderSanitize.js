@@ -6,11 +6,14 @@
 
 const { isTelecaller } = require('./roles');
 
-// Fields that expose pricing / revenue and must never reach a telecaller response.
-const FINANCIAL_ORDER_FIELDS = ['estimated_cost', 'actual_cost', 'amount_paid'];
+// estimated_cost is the phone quote a telecaller gives a customer while
+// booking — that's their job, so it (and its per-service breakdown) is
+// intentionally visible/editable for telecallers. actual_cost and
+// amount_paid reflect real settled revenue and stay owner-only.
+const FINANCIAL_ORDER_FIELDS = ['actual_cost', 'amount_paid'];
 
 // Field names a non-owner may never set via any order write endpoint.
-const PROTECTED_PRICE_FIELDS = ['estimated_cost', 'actual_cost'];
+const PROTECTED_PRICE_FIELDS = ['actual_cost'];
 
 // Redacts financial fields from a single order row — but only for the telecaller
 // role. Owners keep full access, and this must never change what technicians

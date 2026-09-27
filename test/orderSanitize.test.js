@@ -28,9 +28,10 @@ test('sanitizeOrderForRole leaves the order untouched for technicians (unchanged
   assert.deepEqual(sanitizeOrderForRole(order, technician), order);
 });
 
-test('sanitizeOrderForRole strips pricing and payments for a telecaller', () => {
+test('sanitizeOrderForRole strips settled-revenue fields for a telecaller but keeps the quote', () => {
   const clean = sanitizeOrderForRole(sampleOrder(), telecaller);
-  assert.equal('estimated_cost' in clean, false);
+  assert.equal('estimated_cost' in clean, true); // the phone quote — telecaller's own job
+  assert.equal(clean.estimated_cost, '500.00');
   assert.equal('actual_cost' in clean, false);
   assert.equal('amount_paid' in clean, false);
   assert.equal('payments' in clean, false);
@@ -41,28 +42,28 @@ test('sanitizeOrderForRole strips pricing and payments for a telecaller', () => 
 test('sanitizeOrderForRole never mutates the original object', () => {
   const order = sampleOrder();
   sanitizeOrderForRole(order, telecaller);
-  assert.equal('estimated_cost' in order, true);
+  assert.equal('actual_cost' in order, true);
 });
 
 test('sanitizeOrdersForRole maps a list consistently with the single-order helper', () => {
   const orders = [sampleOrder(), { ...sampleOrder(), id: 2 }];
   const clean = sanitizeOrdersForRole(orders, telecaller);
   assert.equal(clean.length, 2);
-  clean.forEach((o) => assert.equal('estimated_cost' in o, false));
+  clean.forEach((o) => {
+    assert.equal('estimated_cost' in o, true);
+    assert.equal('actual_cost' in o, false);
+  });
 
   const untouched = sanitizeOrdersForRole(orders, owner);
   assert.deepEqual(untouched, orders);
 });
 
-test('findProtectedPriceFields flags defined, non-empty price fields only', () => {
-  assert.deepEqual(findProtectedPriceFields({ estimated_cost: 100 }), ['estimated_cost']);
+test('findProtectedPriceFields only flags actual_cost — estimated_cost is telecaller-editable', () => {
+  assert.deepEqual(findProtectedPriceFields({ estimated_cost: 100 }), []);
   assert.deepEqual(findProtectedPriceFields({ actual_cost: 0 }), ['actual_cost']);
-  assert.deepEqual(findProtectedPriceFields({ estimated_cost: undefined }), []);
-  assert.deepEqual(findProtectedPriceFields({ estimated_cost: null }), []);
-  assert.deepEqual(findProtectedPriceFields({ estimated_cost: '' }), []);
+  assert.deepEqual(findProtectedPriceFields({ actual_cost: undefined }), []);
+  assert.deepEqual(findProtectedPriceFields({ actual_cost: null }), []);
+  assert.deepEqual(findProtectedPriceFields({ actual_cost: '' }), []);
   assert.deepEqual(findProtectedPriceFields({ priority: 'high' }), []);
-  assert.deepEqual(
-    findProtectedPriceFields({ estimated_cost: 10, actual_cost: 20 }).sort(),
-    ['actual_cost', 'estimated_cost']
-  );
+  assert.deepEqual(findProtectedPriceFields({ estimated_cost: 10, actual_cost: 20 }), ['actual_cost']);
 });

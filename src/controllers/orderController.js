@@ -19,6 +19,20 @@ const parseServices = (val) => {
   try { return JSON.parse(val); } catch { return [val]; }
 };
 
+// service_estimates: [{ service: 'Screen Replacement', cost: 2000 }, ...] — the
+// per-problem breakdown behind a telecaller's phone quote. Informational only;
+// real revenue is still tracked exclusively through the payments table.
+const parseServiceEstimates = (val) => {
+  if (val === undefined || val === null || val === '') return [];
+  let arr;
+  if (Array.isArray(val)) arr = val;
+  else { try { arr = JSON.parse(val); } catch { return []; } }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((e) => ({ service: String(e?.service || '').trim(), cost: Number(e?.cost) }))
+    .filter((e) => e.service && Number.isFinite(e.cost) && e.cost >= 0);
+};
+
 // Customer Care attribution must point at an active admins-table user
 // (owner or telecaller). Returns the row id, or throws a 400-ish error.
 const resolveCustomerCareId = async (client, customerCareId) => {
@@ -45,19 +59,16 @@ const createOrder = async (req, res, next) => {
       customer_name, customer_phone, customer_email, customer_address,
       device_brand, device_model, services, issue_description,
       service_type, pickup_address, scheduled_date, scheduled_time,
-      priority,
+      priority, estimated_cost, service_estimates,
     } = req.body;
-    let { estimated_cost, customer_care_id } = req.body;
+    let { customer_care_id } = req.body;
 
     // req.user is only present on the authenticated /orders/manual route —
     // the public booking route (/orders) has no auth and no attribution.
+    // estimated_cost is the phone quote a telecaller gives while booking —
+    // that's their job, so both roles may set it (unlike actual_cost, which
+    // reflects settled revenue and is owner-only — see updateOrder).
     const requester = req.user;
-
-    // Telecallers create orders but never set pricing — silently drop rather
-    // than trust a client-supplied estimate for that role.
-    if (requester && isTelecaller(requester)) {
-      estimated_cost = undefined;
-    }
 
     // Customer Care attribution: only meaningful on authenticated (manual) creation.
     // Telecallers default to self-attribution unless another eligible user is chosen.
@@ -112,14 +123,15 @@ const createOrder = async (req, res, next) => {
     } while (attempts < 5);
 
     const servicesArr = parseServices(services);
+    const serviceEstimatesArr = parseServiceEstimates(service_estimates);
 
     const { rows: [{ id: dbOrderId }] } = await client.query(
       `INSERT INTO repair_orders
         (order_id, customer_id, device_brand, device_model, services,
          issue_description, service_type, pickup_address,
          scheduled_date, scheduled_time, priority, estimated_cost,
-         customer_care_id, created_by_id)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+         service_estimates, customer_care_id, created_by_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
        RETURNING id`,
       [
         orderId, customerId, device_brand, device_model,
@@ -127,6 +139,7 @@ const createOrder = async (req, res, next) => {
         service_type, pickup_address || null,
         scheduled_date || null, scheduled_time || null,
         priority || 'normal', estimated_cost || null,
+        JSON.stringify(serviceEstimatesArr),
         customer_care_id || null, createdById,
       ]
     );
@@ -242,7 +255,7 @@ const getOrders = async (req, res, next) => {
          ro.id, ro.order_id, ro.status, ro.priority,
          ro.device_brand, ro.device_model, ro.services,
          ro.service_type, ro.scheduled_date, ro.scheduled_time,
-         ro.estimated_cost, ro.actual_cost, ro.warranty_months, ro.imei_number,
+         ro.estimated_cost, ro.service_estimates, ro.actual_cost, ro.warranty_months, ro.imei_number,
          ro.created_at, ro.updated_at,
          c.id AS customer_id, c.name AS customer_name, c.phone AS customer_phone,
          c.email AS customer_email,
@@ -418,13 +431,15 @@ const updateOrder = async (req, res, next) => {
     const {
       technician_id, priority,
       admin_notes, technician_notes, warranty_months, imei_number,
-      customer_care_id,
+      customer_care_id, estimated_cost, service_estimates,
     } = req.body;
-    let { estimated_cost, actual_cost } = req.body;
+    let { actual_cost } = req.body;
 
-    // Price fields are owner-only. Reject the request outright rather than
-    // silently dropping the fields, so a crafted payload gets a clear 403
-    // instead of appearing to "succeed" while quietly ignoring the price change.
+    // actual_cost is settled revenue and stays owner-only — reject outright
+    // rather than silently dropping it, so a crafted payload gets a clear 403
+    // instead of appearing to "succeed" while quietly ignoring the change.
+    // estimated_cost (the phone quote) and its per-service breakdown are the
+    // telecaller's own job, so both roles may set them.
     if (!isOwner(req.user)) {
       const blocked = findProtectedPriceFields(req.body);
       if (blocked.length) {
@@ -433,8 +448,7 @@ const updateOrder = async (req, res, next) => {
           message: `Not authorized to change: ${blocked.join(', ')}`,
         });
       }
-      estimated_cost = undefined;
-      actual_cost    = undefined;
+      actual_cost = undefined;
     }
 
     const { rows } = await pool.query(
@@ -447,6 +461,7 @@ const updateOrder = async (req, res, next) => {
     // Customer Care attribution — owner and telecaller may both set/change it;
     // omit the field entirely to preserve whatever is already stored.
     const resolvedCareId = await resolveCustomerCareId(pool, customer_care_id);
+    const serviceEstimatesArr = service_estimates !== undefined ? parseServiceEstimates(service_estimates) : undefined;
 
     await pool.query(
       `UPDATE repair_orders SET
@@ -458,8 +473,9 @@ const updateOrder = async (req, res, next) => {
          technician_notes  = COALESCE($6, technician_notes),
          warranty_months   = COALESCE($7, warranty_months),
          imei_number       = COALESCE($8, imei_number),
-         customer_care_id  = COALESCE($9, customer_care_id)
-       WHERE id = $10`,
+         customer_care_id  = COALESCE($9, customer_care_id),
+         service_estimates = COALESCE($10, service_estimates)
+       WHERE id = $11`,
       [
         technician_id   ?? null,
         estimated_cost  ?? null,
@@ -470,6 +486,7 @@ const updateOrder = async (req, res, next) => {
         warranty_months ?? null,
         imei_number     ?? null,
         resolvedCareId  ?? null,
+        serviceEstimatesArr !== undefined ? JSON.stringify(serviceEstimatesArr) : null,
         dbId,
       ]
     );

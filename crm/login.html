@@ -2,20 +2,28 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TurboFix CRM" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <title>TurboFix CRM — Login</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./css/crm.css" />
   <style>
     .input-icon { position: relative; }
     .input-icon svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 16px; height: 16px; color: var(--text-muted); pointer-events: none; }
     .input-icon input { padding-left: 40px; }
-    .eye-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-muted); cursor: pointer; }
+    .eye-toggle { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; display: flex; align-items: center; justify-content: center; background: none; border: none; color: var(--text-muted); cursor: pointer; }
     .eye-toggle svg { width: 16px; height: 16px; }
-    .form-control { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); padding: 11px 14px; font-size: 14px; transition: border-color .2s, box-shadow .2s; outline: none; }
-    .form-control:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-glow); }
-    .form-control::placeholder { color: var(--text-muted); }
+    .input-icon input[type="password"], .input-icon input#password { padding-right: 44px; }
+    .form-control { padding-top: 11px; padding-bottom: 11px; }
     .login-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-muted); font-size: 12px; }
     .login-divider::before, .login-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
   </style>
@@ -38,15 +46,15 @@
       </div>
 
       <!-- Role tabs -->
-      <div class="login-tabs">
-        <button class="login-tab active" id="tab-admin" onclick="switchTab('admin')">Admin / Staff</button>
-        <button class="login-tab" id="tab-technician" onclick="switchTab('technician')">Technician</button>
+      <div class="login-tabs" role="tablist" aria-label="Account type">
+        <button type="button" class="login-tab active" id="tab-admin" role="tab" aria-selected="true" onclick="switchTab('admin')">Admin / Staff</button>
+        <button type="button" class="login-tab" id="tab-technician" role="tab" aria-selected="false" onclick="switchTab('technician')">Technician</button>
       </div>
 
       <!-- Login form -->
       <form id="login-form" onsubmit="handleLogin(event)">
         <div class="form-group">
-          <label class="form-label">Email address</label>
+          <label class="form-label" for="email">Email address</label>
           <div class="input-icon">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75"/>
@@ -56,13 +64,13 @@
         </div>
 
         <div class="form-group">
-          <label class="form-label">Password</label>
+          <label class="form-label" for="password">Password</label>
           <div class="input-icon" style="position:relative;">
             <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z"/>
             </svg>
             <input type="password" id="password" class="form-control" placeholder="••••••••" required autocomplete="current-password" />
-            <button type="button" class="eye-toggle" onclick="togglePw()">
+            <button type="button" class="eye-toggle" aria-label="Show password" onclick="togglePw()">
               <svg id="eye-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -87,20 +95,44 @@
   <script>
     let activeRole = 'admin';
 
-    // Redirect if already logged in
-    if (localStorage.getItem('crm_token')) {
-      window.location.href = './index.html';
+    function homeFor(user) {
+      return user && user.role === 'telecaller' ? './telecaller-dashboard.html' : './index.html';
     }
+
+    // Already signed in with a still-valid token? Go straight to the right dashboard.
+    (function redirectIfSignedIn() {
+      const token = localStorage.getItem('crm_token');
+      if (!token) return;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const user = JSON.parse(localStorage.getItem('crm_user'));
+        if (user && Date.now() < payload.exp * 1000) { window.location.replace(homeFor(user)); return; }
+      } catch { /* malformed token — fall through and clear it */ }
+      localStorage.removeItem('crm_token');
+      localStorage.removeItem('crm_user');
+    })();
+
+    if (new URLSearchParams(location.search).get('session') === 'expired') {
+      showToast('Your session expired — please sign in again', 'info');
+    }
+
+    // Wake the backend (it sleeps when idle) while the user is typing.
+    fetch(CRM.API_BASE.replace(/\/api\/?$/, '') + '/health').catch(() => {});
 
     function switchTab(role) {
       activeRole = role;
-      document.getElementById('tab-admin').classList.toggle('active', role === 'admin');
-      document.getElementById('tab-technician').classList.toggle('active', role === 'technician');
+      ['admin', 'technician'].forEach(r => {
+        const tab = document.getElementById(`tab-${r}`);
+        tab.classList.toggle('active', role === r);
+        tab.setAttribute('aria-selected', String(role === r));
+      });
     }
 
     function togglePw() {
       const input = document.getElementById('password');
-      input.type = input.type === 'password' ? 'text' : 'password';
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      document.querySelector('.eye-toggle').setAttribute('aria-label', show ? 'Hide password' : 'Show password');
     }
 
     async function handleLogin(e) {
@@ -125,17 +157,14 @@
       btn.disabled = false;
       btnText.textContent = 'Sign In';
 
-      if (!result) return;
-      if (!result.ok) {
-        showToast(result.data.message || 'Login failed', 'error');
+      if (!result || !result.ok) {
+        showToast(apiErrorMessage(result, 'Login failed'), 'error');
         return;
       }
 
       localStorage.setItem('crm_token', result.data.token);
       localStorage.setItem('crm_user',  JSON.stringify(result.data.user));
-      window.location.href = result.data.user.role === 'telecaller'
-        ? './telecaller-dashboard.html'
-        : './index.html';
+      window.location.replace(homeFor(result.data.user));
     }
   </script>
 </body>

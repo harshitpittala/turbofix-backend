@@ -3,28 +3,79 @@
  */
 
 // ── API helper ────────────────────────────────────────────────────────────────
+// Remembers the last button the user clicked so a mutating request can disable
+// it while in flight — stops double-taps creating duplicate orders/payments.
+let _lastClickedButton = null;
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest && e.target.closest('button');
+  _lastClickedButton = btn ? { el: btn, at: Date.now() } : null;
+}, true);
+
+let _wakeToastShown = false;
+
 async function apiCall(endpoint, options = {}) {
   const token = localStorage.getItem('crm_token');
   const url   = CRM.API_BASE + endpoint;
+  const method = (options.method || 'GET').toUpperCase();
+  const isAuthEndpoint = endpoint.startsWith('/auth/');
 
-  const defaultHeaders = { 'Content-Type': 'application/json' };
-  if (token) defaultHeaders['Authorization'] = `Bearer ${token}`;
+  const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+  if (token && !isAuthEndpoint) headers['Authorization'] = `Bearer ${token}`;
 
-  const resp = await fetch(url, {
-    headers: { ...defaultHeaders, ...(options.headers || {}) },
-    ...options,
-  });
+  let busyBtn = null;
+  if (method !== 'GET' && _lastClickedButton && Date.now() - _lastClickedButton.at < 1500 && !_lastClickedButton.el.disabled) {
+    busyBtn = _lastClickedButton.el;
+    busyBtn.disabled = true;
+    _lastClickedButton = null;
+  }
 
-  const data = await resp.json().catch(() => ({ success: false, message: 'Invalid response' }));
+  // The free-tier backend sleeps when idle; tell the user instead of looking frozen.
+  const wakeTimer = setTimeout(() => {
+    if (_wakeToastShown) return;
+    _wakeToastShown = true;
+    showToast('Server is waking up — this can take up to a minute…', 'info', 8000);
+  }, 6000);
 
-  if (resp.status === 401) {
+  let resp;
+  try {
+    resp = await fetch(url, { ...options, headers });
+  } catch {
+    return { ok: false, status: 0, data: { success: false, message: 'Network error — check your internet connection' } };
+  } finally {
+    clearTimeout(wakeTimer);
+    if (busyBtn) busyBtn.disabled = false;
+  }
+
+  const data = await resp.json().catch(() => ({ success: false, message: `Unexpected server response (${resp.status})` }));
+
+  // A 401 from a login attempt means wrong credentials, not an expired session.
+  if (resp.status === 401 && !isAuthEndpoint) {
     localStorage.removeItem('crm_token');
     localStorage.removeItem('crm_user');
-    window.location.href = '/login.html';
+    window.location.href = './login.html?session=expired';
     return null;
   }
 
   return { ok: resp.ok, status: resp.status, data };
+}
+
+function apiErrorMessage(r, fallback = 'Something went wrong') {
+  return (r && r.data && r.data.message) || fallback;
+}
+
+// Inline error block with a retry button, for list/panel loaders.
+function loadErrorHTML(r, fallback, retryCall) {
+  return `<div class="load-error"><span>${esc(apiErrorMessage(r, fallback))}</span>` +
+    (retryCall ? `<button class="btn btn-secondary btn-sm" onclick="${retryCall}">Retry</button>` : '') + `</div>`;
+}
+
+// Guards against out-of-order responses: a slow earlier request must not
+// overwrite the result of a newer one (fast filtering, switching records).
+const _latestRequest = {};
+function beginRequest(key) {
+  const id = (_latestRequest[key] || 0) + 1;
+  _latestRequest[key] = id;
+  return () => _latestRequest[key] !== id;
 }
 
 // ── Toast notifications ───────────────────────────────────────────────────────
@@ -40,19 +91,54 @@ function showToast(message, type = 'success', duration = 3500) {
 
   const toast = document.createElement('div');
   toast.className = `toast ${type}`;
-  toast.innerHTML = `${icons[type] || icons.info}<span class="toast-msg">${message}</span>`;
+  toast.setAttribute('role', type === 'error' ? 'alert' : 'status');
+  toast.innerHTML = `${icons[type] || icons.info}<span class="toast-msg"></span>`;
+  toast.querySelector('.toast-msg').textContent = message;
   container.appendChild(toast);
   setTimeout(() => toast.remove(), duration);
 }
 
 // ── Modal helpers ─────────────────────────────────────────────────────────────
+// Scroll lock follows whether *any* modal is open, so closing a stacked modal
+// (e.g. Update Status over Order Details) doesn't unlock the page underneath.
+function syncBodyScrollLock() {
+  const anyOpen = document.querySelector('.modal-overlay.open') ||
+    (window.innerWidth <= 900 && document.querySelector('.sidebar.open'));
+  document.body.style.overflow = anyOpen ? 'hidden' : '';
+}
 function openModal(id) {
   const el = document.getElementById(id);
-  if (el) { el.classList.add('open'); document.body.style.overflow = 'hidden'; }
+  if (el) { el.classList.add('open'); syncBodyScrollLock(); }
 }
 function closeModal(id) {
   const el = document.getElementById(id);
-  if (el) { el.classList.remove('open'); document.body.style.overflow = ''; }
+  if (el) { el.classList.remove('open'); syncBodyScrollLock(); }
+}
+
+// Backdrop click closes the modal — but only when the press also started on the
+// backdrop, so selecting text in a field and releasing outside doesn't discard the form.
+let _pressStartedOnOverlay = false;
+document.addEventListener('mousedown', (e) => {
+  _pressStartedOnOverlay = e.target.classList && e.target.classList.contains('modal-overlay');
+});
+document.addEventListener('click', (e) => {
+  const t = e.target;
+  if (t.classList && t.classList.contains('modal-overlay') && t.classList.contains('open') && _pressStartedOnOverlay) {
+    closeModal(t.id);
+  }
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape') return;
+  const open = document.querySelectorAll('.modal-overlay.open');
+  if (open.length) { closeModal(open[open.length - 1].id); return; }
+  const sidebar = document.getElementById('sidebar');
+  if (sidebar && sidebar.classList.contains('open')) document.getElementById('menu-toggle')?.click();
+});
+
+// Today's date as YYYY-MM-DD in the user's local timezone (toISOString() is UTC,
+// which is the previous day in India before 5:30 AM).
+function localISODate(d = new Date()) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 // ── Date formatting ───────────────────────────────────────────────────────────
@@ -124,14 +210,14 @@ function renderPagination(containerId, pagination, onPageChange) {
   const { page, pages, total } = pagination;
 
   let html = `<span class="page-info">${total} total</span>`;
-  html += `<button class="page-btn" onclick="${onPageChange}(${page - 1})" ${page <= 1 ? 'disabled' : ''}>‹</button>`;
+  html += `<button class="page-btn" aria-label="Previous page" onclick="${onPageChange}(${page - 1})" ${page <= 1 ? 'disabled' : ''}>‹</button>`;
 
   const start = Math.max(1, page - 2);
   const end   = Math.min(pages, page + 2);
   for (let i = start; i <= end; i++) {
-    html += `<button class="page-btn ${i === page ? 'active' : ''}" onclick="${onPageChange}(${i})">${i}</button>`;
+    html += `<button class="page-btn ${i === page ? 'active' : ''}" ${i === page ? 'aria-current="page"' : ''} onclick="${onPageChange}(${i})">${i}</button>`;
   }
-  html += `<button class="page-btn" onclick="${onPageChange}(${page + 1})" ${page >= pages ? 'disabled' : ''}>›</button>`;
+  html += `<button class="page-btn" aria-label="Next page" onclick="${onPageChange}(${page + 1})" ${page >= pages ? 'disabled' : ''}>›</button>`;
 
   el.innerHTML = html;
 }
@@ -157,25 +243,54 @@ function initSidebar() {
     sidebar.insertAdjacentElement('afterend', backdrop);
   }
 
-  const close = () => {
-    sidebar.classList.remove('open');
-    backdrop.style.display = 'none';
-  };
-  const open = () => {
-    sidebar.classList.add('open');
-    backdrop.style.display = window.innerWidth <= 900 ? 'block' : 'none';
+  toggle.setAttribute('aria-label', 'Open menu');
+  toggle.setAttribute('aria-controls', 'sidebar');
+  toggle.setAttribute('aria-expanded', 'false');
+
+  const setOpen = (isOpen) => {
+    sidebar.classList.toggle('open', isOpen);
+    toggle.setAttribute('aria-expanded', String(isOpen));
+    toggle.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+    syncBodyScrollLock();
   };
 
-  toggle.addEventListener('click', () => {
-    sidebar.classList.contains('open') ? close() : open();
-  });
-  backdrop.addEventListener('click', close);
+  toggle.addEventListener('click', () => setOpen(!sidebar.classList.contains('open')));
+  backdrop.addEventListener('click', () => setOpen(false));
+  sidebar.addEventListener('click', (e) => { if (e.target.closest('.nav-item')) setOpen(false); });
+  window.matchMedia('(min-width: 901px)').addEventListener('change', (e) => { if (e.matches) setOpen(false); });
 }
 
 // ── Mark active nav ───────────────────────────────────────────────────────────
+// Compares normalized page names so it works with both "./orders.html" source
+// hrefs and Netlify's pretty URLs ("/orders"). Leaves the markup's default
+// alone if nothing matches, instead of clearing every highlight.
 function markActiveNav() {
-  const path = window.location.pathname;
-  document.querySelectorAll('.nav-item').forEach((el) => {
-    el.classList.toggle('active', el.getAttribute('href') === path);
+  const current = normalizePage(window.location.pathname.split('/').pop());
+  const items = [...document.querySelectorAll('.nav-item[href]:not([href="#"])')];
+  const matches = items.filter((el) => normalizePage(el.getAttribute('href').split('/').pop()) === current);
+  if (!matches.length) return;
+  items.forEach((el) => {
+    const on = matches.includes(el);
+    el.classList.toggle('active', on);
+    if (on) el.setAttribute('aria-current', 'page'); else el.removeAttribute('aria-current');
   });
 }
+
+// ── Installable app (PWA) ─────────────────────────────────────────────────────
+// Service workers need HTTPS (localhost is exempt for development).
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(() => {});
+  });
+}
+
+window.addEventListener('offline', () => showToast("You're offline — changes can't be saved until you reconnect", 'warn', 6000));
+window.addEventListener('online', () => showToast('Back online', 'success', 2500));
+
+// Pages restored from the back/forward cache skip script execution; make sure
+// a signed-out user pressing Back doesn't see a cached CRM page.
+window.addEventListener('pageshow', (e) => {
+  if (e.persisted && document.getElementById('sidebar') && !localStorage.getItem('crm_token')) {
+    window.location.replace('./login.html');
+  }
+});

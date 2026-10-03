@@ -163,6 +163,7 @@ CREATE TABLE IF NOT EXISTS order_activities (
   device_brand    VARCHAR(60),
   device_model    VARCHAR(120),
   service         VARCHAR(150),
+  service_estimates JSONB       DEFAULT '[]', -- [{ service, cost }] per-service quote for a lead
   created_at      TIMESTAMPTZ   DEFAULT NOW(),
   updated_at      TIMESTAMPTZ   DEFAULT NOW()
 );

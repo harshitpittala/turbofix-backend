@@ -2,9 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TurboFix CRM" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <title>Work Done — TurboFix CRM</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./css/crm.css" />
   <style>
@@ -50,33 +59,7 @@
       <div class="logo-icon">T</div>
       <div><div class="logo-text">TurboFix</div><div class="logo-sub">CRM Dashboard</div></div>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section">
-        <div class="nav-label">Main</div>
-        <a href="./index.html" class="nav-item">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>
-          Dashboard
-        </a>
-        <a href="./orders.html" class="nav-item">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>
-          Orders
-        </a>
-        <a href="./workdone.html" class="nav-item active">
-          <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Work Done
-        </a>
-      </div>
-      <div class="nav-section">
-        <div class="nav-label">Management</div>
-        <a href="./technicians.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/></svg>Technicians</a>
-        <a href="./customers.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Customers</a>
-        <a href="./payments.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z"/></svg>Payments</a>
-        <a href="./analysis.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z"/></svg>Analysis</a>
-      </div>
-      <div class="nav-section">
-        <a href="#" class="nav-item" onclick="logout();return false;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>Sign Out</a>
-      </div>
-    </nav>
+    <nav class="sidebar-nav" aria-label="Main navigation"><!-- built by renderSidebarNav() in js/auth.js --></nav>
     <div class="sidebar-bottom">
       <div class="sidebar-user">
         <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
@@ -130,11 +113,11 @@
       <div class="toolbar">
         <div class="search-box">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>
-          <input type="text" placeholder="Order ID, customer, phone…" oninput="debounceSearch(this.value)" id="search-input" />
+          <input type="text" placeholder="Order ID, customer, phone…" aria-label="Search completed repairs" oninput="debounceSearch(this.value)" id="search-input" />
         </div>
-        <input type="date" class="form-control" style="width:150px;" onchange="applyFilter('date_from',this.value)" title="From date" />
-        <input type="date" class="form-control" style="width:150px;" onchange="applyFilter('date_to',this.value)" title="To date" />
-        <select class="form-control" style="width:150px;" onchange="applyFilter('sort',this.value)">
+        <input type="date" class="form-control" style="width:150px;" onchange="applyFilter('date_from',this.value)" title="From date" aria-label="From date" />
+        <input type="date" class="form-control" style="width:150px;" onchange="applyFilter('date_to',this.value)" title="To date" aria-label="To date" />
+        <select class="form-control" style="width:150px;" aria-label="Sort" onchange="applyFilter('sort',this.value)">
           <option value="newest">Newest First</option>
           <option value="oldest">Oldest First</option>
           <option value="cost_high">Highest Cost</option>
@@ -144,7 +127,7 @@
 
       <!-- Table -->
       <div class="table-wrapper">
-        <table>
+        <table class="table-cards">
           <thead>
             <tr>
               <th>Invoice #</th>
@@ -233,7 +216,7 @@
 </div>
 
 <!-- jsPDF CDN -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="./js/config.js"></script>
 <script src="./js/utils.js"></script>
 <script src="./js/auth.js"></script>
@@ -244,6 +227,7 @@
   let currentInvoiceData = null; // holds order data for PDF generation
 
   async function loadWorkDone() {
+    const isStale = beginRequest('workdone');
     const tbody = document.getElementById('wd-tbody');
     tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>`;
 
@@ -266,15 +250,16 @@
     });
 
     const r = await apiCall(`/orders?${params}`);
+    if (isStale()) return;
     if (!r || !r.ok) {
-      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;color:var(--danger);padding:30px;">Failed to load completed repairs</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9">${loadErrorHTML(r, 'Failed to load completed repairs', 'loadWorkDone()')}</td></tr>`;
+      document.getElementById('wd-pagination').innerHTML = '';
       return;
     }
 
     const { data, pagination } = r.data;
 
-    // Update stats from the first load (no filter applied)
-    if (state.page === 1) updateStats(data);
+    if (state.page === 1) updateStats(data, pagination.total);
 
     if (!data.length) {
       tbody.innerHTML = `<tr><td colspan="9"><div class="empty-state">
@@ -287,42 +272,43 @@
 
     tbody.innerHTML = data.map(o => {
       const services = Array.isArray(o.services) ? o.services : tryParseJSON(o.services, []);
-      const cost     = o.actual_cost || o.estimated_cost;
-      const paid     = (o.amount_paid || 0) >= (cost || 0) && cost > 0;
-      const partPaid = (o.amount_paid || 0) > 0 && !paid;
+      const cost     = Number(o.actual_cost || o.estimated_cost || 0);
+      const amtPaid  = Number(o.amount_paid || 0);
+      const paid     = cost > 0 && amtPaid >= cost;
+      const partPaid = amtPaid > 0 && !paid;
       const payLabel = paid ? 'Paid' : (partPaid ? 'Partial' : 'Unpaid');
       const payClass = paid ? 'paid' : (partPaid ? 'partial' : 'unpaid');
 
       return `
       <tr>
-        <td class="primary" style="cursor:pointer;font-family:monospace;font-size:12px;" onclick="openInvoiceModal('${esc(o.order_id)}')">
+        <td class="primary" data-label="Invoice #" style="cursor:pointer;font-family:monospace;font-size:12px;" onclick="openInvoiceModal('${esc(o.order_id)}')">
           ${esc(o.order_id)}
         </td>
-        <td>
+        <td data-label="Customer">
           <div style="font-weight:600;color:var(--text);font-size:13px;">${esc(o.customer_name||'—')}</div>
           <div style="font-size:11px;color:var(--text-muted);">${esc(o.customer_phone||'')}</div>
         </td>
-        <td>
+        <td data-label="Device">
           <div style="font-size:13px;color:var(--text);">${esc(o.device_brand||'—')}</div>
           <div style="font-size:11px;color:var(--text-muted);">${esc(o.device_model||'')}</div>
         </td>
-        <td>
+        <td data-label="Services">
           <div class="wd-services">${services.map(s => esc(s)).join('<br>')}</div>
         </td>
-        <td style="font-weight:700;color:var(--text);font-size:13px;">
+        <td data-label="Cost" style="font-weight:700;color:var(--text);font-size:13px;">
           ${formatCurrency(cost)}
         </td>
-        <td>
+        <td data-label="Payment">
           <span class="cost-badge ${payClass}">${payLabel}</span>
           ${partPaid ? `<div style="font-size:11px;color:var(--text-muted);margin-top:3px;">${formatCurrency(o.amount_paid)} paid</div>` : ''}
         </td>
-        <td>
+        <td data-label="Technician">
           ${o.technician_name
             ? `<div style="display:flex;align-items:center;gap:6px;">${techAvatar(o.technician_name,o.avatar_color,22)}<span style="font-size:12px;">${esc(o.technician_name)}</span></div>`
             : `<span style="color:var(--text-muted);font-size:12px;">—</span>`}
         </td>
-        <td style="font-size:12px;color:var(--text-muted);">${formatDate(o.updated_at||o.created_at)}</td>
-        <td>
+        <td data-label="Completed" style="font-size:12px;color:var(--text-muted);">${formatDate(o.updated_at||o.created_at)}</td>
+        <td class="td-actions">
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <button class="btn btn-secondary btn-sm" onclick="openInvoiceModal('${esc(o.order_id)}')">View</button>
             <button class="invoice-btn" onclick="quickDownloadInvoice('${esc(o.order_id)}')">
@@ -338,16 +324,16 @@
     document.getElementById('wd-stats').style.display = '';
   }
 
-  function updateStats(data) {
+  function updateStats(data, total) {
     if (!data || !data.length) return;
     const revenue = data.reduce((sum, o) => sum + Number(o.actual_cost || o.estimated_cost || 0), 0);
     const avg     = revenue / data.length;
     const paidCnt = data.filter(o => {
-      const cost = o.actual_cost || o.estimated_cost;
-      return cost > 0 && (o.amount_paid || 0) >= cost;
+      const cost = Number(o.actual_cost || o.estimated_cost || 0);
+      return cost > 0 && Number(o.amount_paid || 0) >= cost;
     }).length;
 
-    document.getElementById('stat-total').textContent   = data.length;
+    document.getElementById('stat-total').textContent   = total ?? data.length;
     document.getElementById('stat-revenue').textContent = '₹' + revenue.toLocaleString('en-IN');
     document.getElementById('stat-avg').textContent     = '₹' + Math.round(avg).toLocaleString('en-IN');
     document.getElementById('stat-paid').textContent    = paidCnt;
@@ -514,7 +500,7 @@
       <div id="invoice-preview" style="font-family:Inter,Arial,sans-serif;padding:24px;background:#fff;border-radius:8px;color:#1e293b;">
 
         <!-- Company header -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:2px solid #e2e8f0;margin-bottom:20px;">
+        <div style="display:flex;flex-wrap:wrap;gap:16px;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:2px solid #e2e8f0;margin-bottom:20px;">
           <div style="display:flex;align-items:center;gap:14px;">
             <!-- TurboFix logo mark (inline SVG — works in preview, PDF, and print) -->
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="52" height="52" style="border-radius:10px;flex-shrink:0;">
@@ -546,7 +532,7 @@
         </div>
 
         <!-- Customer & Device -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px;" class="modal-info-grid">
+        <div style="margin-bottom:20px;" class="modal-info-grid">
           <div style="background:#f8fafc;border-radius:8px;padding:14px;">
             <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#94a3b8;margin-bottom:8px;">Bill To</div>
             <div style="font-weight:700;color:#1e293b;font-size:15px;">${esc(o.customer_name||'—')}</div>
@@ -946,7 +932,7 @@
     const blob = new Blob([[headers.join(','), ...csvRows].join('\n')], { type: 'text/csv' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
-    a.href = url; a.download = `TurboFix-WorkDone-${new Date().toISOString().slice(0,10)}.csv`;
+    a.href = url; a.download = `TurboFix-WorkDone-${localISODate()}.csv`;
     a.click(); URL.revokeObjectURL(url);
     showToast(`Exported ${rows.length} records`, 'success');
   }

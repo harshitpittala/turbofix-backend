@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <title>Offline — TurboFix CRM</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="./css/crm.css" />
+  <style>
+    .offline-box { text-align: center; }
+    .offline-box img { width: 72px; height: 72px; border-radius: 18px; margin-bottom: 20px; }
+    .offline-box p { color: var(--text-dim); font-size: 14px; margin: 8px 0 24px; }
+  </style>
+</head>
+<body>
+  <div class="login-page">
+    <div class="login-box offline-box">
+      <img src="./icons/maskable-192.png" alt="" />
+      <div class="login-title">You're offline</div>
+      <p>TurboFix CRM needs an internet connection to load orders and customer data. Check your connection and try again.</p>
+      <button class="btn btn-primary btn-lg" style="width:100%;justify-content:center;" onclick="location.reload()">Try again</button>
+    </div>
+  </div>
+  <script>window.addEventListener('online', () => location.reload());</script>
+</body>
+</html>

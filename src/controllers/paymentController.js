@@ -68,7 +68,7 @@ const getPayments = async (req, res, next) => {
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
     const { rows } = await pool.query(
-      `SELECT p.*, ro.order_id AS order_ref, c.name AS customer_name
+      `SELECT p.*, ro.order_id AS order_ref, ro.status AS order_status, c.name AS customer_name
        FROM payments p
        INNER JOIN repair_orders ro ON p.order_id = ro.id
        LEFT JOIN customers c ON ro.customer_id = c.id
@@ -109,33 +109,77 @@ const updatePayment = async (req, res, next) => {
   }
 };
 
+// DELETE /api/payments/:id  (admin)
+// Removes a payment record (e.g. entered by mistake). If the order's
+// actual_cost was set from this payment, fall back to the latest remaining
+// paid payment so the order doesn't keep showing a settled amount that no
+// longer exists.
+const deletePayment = async (req, res, next) => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    const { rows } = await client.query(
+      'DELETE FROM payments WHERE id = $1 RETURNING order_id, amount, status',
+      [req.params.id]
+    );
+    if (!rows.length) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ success: false, message: 'Payment not found' });
+    }
+    const deleted = rows[0];
+
+    if (deleted.status === 'paid') {
+      await client.query(
+        `UPDATE repair_orders ro SET actual_cost = (
+           SELECT p.amount FROM payments p
+           WHERE p.order_id = ro.id AND p.status = 'paid'
+           ORDER BY p.paid_at DESC NULLS LAST, p.id DESC LIMIT 1
+         )
+         WHERE ro.id = $1 AND ro.actual_cost = $2`,
+        [deleted.order_id, deleted.amount]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json({ success: true, message: 'Payment deleted' });
+  } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
+    next(err);
+  } finally {
+    client.release();
+  }
+};
+
 // GET /api/payments/summary  (admin — revenue stats)
+// Payments on cancelled orders are excluded from revenue.
 const getPaymentSummary = async (req, res, next) => {
   try {
     const { date_from, date_to } = req.query;
-    const conditions = ["status = 'paid'"];
+    const conditions = ["p.status = 'paid'", "ro.status <> 'cancelled'"];
     const params     = [];
 
-    if (date_from) { conditions.push(`paid_at::date >= $${params.length + 1}`); params.push(date_from); }
-    if (date_to)   { conditions.push(`paid_at::date <= $${params.length + 1}`); params.push(date_to); }
+    if (date_from) { conditions.push(`p.paid_at::date >= $${params.length + 1}`); params.push(date_from); }
+    if (date_to)   { conditions.push(`p.paid_at::date <= $${params.length + 1}`); params.push(date_to); }
 
+    const from  = 'FROM payments p INNER JOIN repair_orders ro ON p.order_id = ro.id';
     const where = `WHERE ${conditions.join(' AND ')}`;
 
     const { rows: [{ total, count }] } = await pool.query(
-      `SELECT COALESCE(SUM(amount), 0) AS total, COUNT(*) AS count FROM payments ${where}`,
+      `SELECT COALESCE(SUM(p.amount), 0) AS total, COUNT(*) AS count ${from} ${where}`,
       params
     );
 
     const { rows: byMethod } = await pool.query(
-      `SELECT method, COALESCE(SUM(amount), 0) AS amount, COUNT(*) AS count
-       FROM payments ${where} GROUP BY method`,
+      `SELECT p.method, COALESCE(SUM(p.amount), 0) AS amount, COUNT(*) AS count
+       ${from} ${where} GROUP BY p.method`,
       params
     );
 
     const { rows: daily } = await pool.query(
-      `SELECT paid_at::date AS date, COALESCE(SUM(amount), 0) AS amount
-       FROM payments ${where}
-       GROUP BY paid_at::date
+      `SELECT p.paid_at::date AS date, COALESCE(SUM(p.amount), 0) AS amount
+       ${from} ${where}
+       GROUP BY p.paid_at::date
        ORDER BY date DESC LIMIT 30`,
       params
     );
@@ -154,4 +198,4 @@ const getPaymentSummary = async (req, res, next) => {
   }
 };
 
-module.exports = { createPayment, getPayments, updatePayment, getPaymentSummary };
+module.exports = { createPayment, getPayments, updatePayment, deletePayment, getPaymentSummary };

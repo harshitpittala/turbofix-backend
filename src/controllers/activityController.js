@@ -15,6 +15,27 @@ const pool = require('../config/database');
 const ACTIVITY_TYPES = ['callback', 'repair_appointment', 'follow_up', 'pickup_delivery', 'post_repair_follow_up'];
 const ACTIVITY_STATUSES = ['pending', 'done', 'cancelled'];
 
+// service_estimates: [{ service: 'Display', cost: 17500 }, ...] — the price the
+// telecaller quoted for each problem while the lead was undecided. cost may be
+// null when a service was noted but no price was given yet.
+const parseServiceEstimates = (val) => {
+  if (val === undefined || val === null || val === '') return [];
+  let arr;
+  if (Array.isArray(val)) arr = val;
+  else { try { arr = JSON.parse(val); } catch { return []; } }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .map((e) => {
+      const cost = e?.cost === null || e?.cost === undefined || e?.cost === '' ? null : Number(e.cost);
+      return { service: String(e?.service || '').trim().slice(0, 100), cost };
+    })
+    .filter((e) => e.service && (e.cost === null || (Number.isFinite(e.cost) && e.cost >= 0)));
+};
+
+// Plain-text summary kept in the `service` column (VARCHAR(150)) for search.
+const summarizeServices = (estimates) =>
+  estimates.map((e) => e.service).join(', ').slice(0, 150) || null;
+
 const resolveOrderDbId = async (client, orderIdOrDbId) => {
   const { rows } = await client.query(
     'SELECT id FROM repair_orders WHERE id::text = $1 OR order_id = $1',
@@ -43,7 +64,7 @@ const createActivity = async (req, res, next) => {
   try {
     const {
       order_id, type, scheduled_at, notes, assigned_to_id,
-      customer_name, phone, device_brand, device_model, service,
+      customer_name, phone, device_brand, device_model, service, service_estimates,
     } = req.body;
 
     if (!ACTIVITY_TYPES.includes(type)) {
@@ -63,16 +84,19 @@ const createActivity = async (req, res, next) => {
 
     const assignedId = await resolveAssignedId(assigned_to_id);
     const { id: userId, name: userName } = req.user;
+    const estimates = parseServiceEstimates(service_estimates);
+    const serviceSummary = estimates.length ? summarizeServices(estimates) : (service || null);
 
     const { rows: [activity] } = await pool.query(
       `INSERT INTO order_activities
         (order_id, type, scheduled_at, notes, assigned_to_id, created_by_id, created_by_name,
-         customer_name, phone, device_brand, device_model, service)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+         customer_name, phone, device_brand, device_model, service, service_estimates)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        RETURNING *`,
       [
         dbOrderId, type, scheduled_at, notes || null, assignedId, userId, userName || 'Staff',
-        customer_name || null, phone || null, device_brand || null, device_model || null, service || null,
+        customer_name || null, phone || null, device_brand || null, device_model || null, serviceSummary,
+        JSON.stringify(estimates),
       ]
     );
 
@@ -126,7 +150,7 @@ const getActivities = async (req, res, next) => {
 
     const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
 
-    const { rows: countRows } = await pool.query(
+    const countQuery = pool.query(
       `SELECT COUNT(*) AS total
        FROM order_activities oa
        LEFT JOIN repair_orders ro ON oa.order_id = ro.id
@@ -134,9 +158,8 @@ const getActivities = async (req, res, next) => {
        ${where}`,
       params
     );
-    const total = parseInt(countRows[0].total);
 
-    const { rows } = await pool.query(
+    const listQuery = pool.query(
       `SELECT oa.*, ro.order_id AS order_ref,
               COALESCE(oa.customer_name, c.name)  AS customer_name,
               COALESCE(oa.phone, c.phone)         AS customer_phone,
@@ -150,6 +173,9 @@ const getActivities = async (req, res, next) => {
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, parseInt(limit), offset]
     );
+
+    const [{ rows: countRows }, { rows }] = await Promise.all([countQuery, listQuery]);
+    const total = parseInt(countRows[0].total);
 
     res.json({
       success: true,
@@ -195,7 +221,7 @@ const updateActivity = async (req, res, next) => {
     const { id } = req.params;
     const {
       scheduled_at, notes, assigned_to_id, status, order_id, type,
-      customer_name, phone, device_brand, device_model, service,
+      customer_name, phone, device_brand, device_model, service, service_estimates,
     } = req.body;
     const { id: userId, name: userName } = req.user;
 
@@ -241,7 +267,13 @@ const updateActivity = async (req, res, next) => {
     if (phone !== undefined) push('phone', phone || null);
     if (device_brand !== undefined) push('device_brand', device_brand || null);
     if (device_model !== undefined) push('device_model', device_model || null);
-    if (service !== undefined) push('service', service || null);
+    if (service_estimates !== undefined) {
+      const estimates = parseServiceEstimates(service_estimates);
+      push('service_estimates', JSON.stringify(estimates));
+      push('service', estimates.length ? summarizeServices(estimates) : (service || null));
+    } else if (service !== undefined) {
+      push('service', service || null);
+    }
     if (status !== undefined) {
       push('status', status);
       push('completed_at', status === 'done' ? new Date() : null);

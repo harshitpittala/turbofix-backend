@@ -74,7 +74,7 @@ const getCustomerById = async (req, res, next) => {
       `SELECT COALESCE(SUM(p.amount), 0) AS total_paid
        FROM payments p
        INNER JOIN repair_orders ro ON p.order_id = ro.id
-       WHERE ro.customer_id = $1 AND p.status = 'paid'`,
+       WHERE ro.customer_id = $1 AND p.status = 'paid' AND ro.status <> 'cancelled'`,
       [customer.id]
     );
 

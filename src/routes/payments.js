@@ -6,7 +6,7 @@ const express = require('express');
 const { body } = require('express-validator');
 const router  = express.Router();
 
-const { createPayment, getPayments, updatePayment, getPaymentSummary } = require('../controllers/paymentController');
+const { createPayment, getPayments, updatePayment, deletePayment, getPaymentSummary } = require('../controllers/paymentController');
 const { authenticate, authorizeAdmin } = require('../middleware/auth');
 const validate = require('../middleware/validate');
 
@@ -22,5 +22,6 @@ router.get('/summary', getPaymentSummary);
 router.get('/',        getPayments);
 router.post('/',       createRules, validate, createPayment);
 router.patch('/:id',   updatePayment);
+router.delete('/:id',  deletePayment);
 
 module.exports = router;

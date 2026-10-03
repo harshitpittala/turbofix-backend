@@ -5,62 +5,47 @@
 const pool = require('../config/database');
 
 // GET /api/dashboard/stats
+// Each metric is a scalar subquery in ONE statement — one database round trip
+// instead of eight sequential ones, without holding eight pool connections.
 const getStats = async (req, res, next) => {
   try {
-    const { rows: [{ count: ordersToday }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM repair_orders WHERE created_at::date = CURRENT_DATE`
-    );
+    const [{ rows: [s] }, { rows: byStatus }] = await Promise.all([
+      pool.query(
+        `SELECT
+           (SELECT COUNT(*) FROM repair_orders WHERE created_at::date = CURRENT_DATE) AS orders_today,
+           (SELECT COUNT(*) FROM repair_orders WHERE status NOT IN ('delivered', 'cancelled')) AS active_orders,
+           (SELECT COALESCE(SUM(p.amount), 0) FROM payments p
+             INNER JOIN repair_orders ro ON p.order_id = ro.id
+             WHERE p.status = 'paid' AND ro.status <> 'cancelled'
+               AND DATE_TRUNC('month', p.paid_at) = DATE_TRUNC('month', CURRENT_DATE)) AS month_revenue,
+           (SELECT COALESCE(SUM(p.amount), 0) FROM payments p
+             INNER JOIN repair_orders ro ON p.order_id = ro.id
+             WHERE p.status = 'paid' AND ro.status <> 'cancelled'
+               AND DATE_TRUNC('month', p.paid_at) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')) AS last_month_revenue,
+           (SELECT COUNT(*) FROM customers) AS total_customers,
+           (SELECT COUNT(*) FROM technicians WHERE is_active = true) AS active_techs,
+           (SELECT COUNT(*) FROM repair_orders
+             WHERE status = 'delivered'
+               AND DATE_TRUNC('month', updated_at) = DATE_TRUNC('month', CURRENT_DATE)) AS completed_this_month`
+      ),
+      pool.query(`SELECT status, COUNT(*) AS count FROM repair_orders GROUP BY status`),
+    ]);
 
-    const { rows: [{ count: activeOrders }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM repair_orders
-       WHERE status NOT IN ('delivered', 'cancelled')`
-    );
-
-    const { rows: [{ total: monthRevenue }] } = await pool.query(
-      `SELECT COALESCE(SUM(amount), 0) AS total FROM payments
-       WHERE status = 'paid'
-         AND DATE_TRUNC('month', paid_at) = DATE_TRUNC('month', CURRENT_DATE)`
-    );
-
-    const { rows: [{ total: lastMonthRevenue }] } = await pool.query(
-      `SELECT COALESCE(SUM(amount), 0) AS total FROM payments
-       WHERE status = 'paid'
-         AND DATE_TRUNC('month', paid_at) = DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month')`
-    );
-
-    const { rows: [{ count: totalCustomers }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM customers`
-    );
-
-    const { rows: [{ count: activeTechs }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM technicians WHERE is_active = true`
-    );
-
-    const { rows: byStatus } = await pool.query(
-      `SELECT status, COUNT(*) AS count FROM repair_orders GROUP BY status`
-    );
-
-    const { rows: [{ count: completedThisMonth }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM repair_orders
-       WHERE status = 'delivered'
-         AND DATE_TRUNC('month', updated_at) = DATE_TRUNC('month', CURRENT_DATE)`
-    );
-
-    const mr  = parseFloat(monthRevenue);
-    const lmr = parseFloat(lastMonthRevenue);
+    const mr  = parseFloat(s.month_revenue);
+    const lmr = parseFloat(s.last_month_revenue);
     const revenueGrowth = lmr > 0 ? (((mr - lmr) / lmr) * 100).toFixed(1) : null;
 
     res.json({
       success: true,
       data: {
-        orders_today:         parseInt(ordersToday),
-        active_orders:        parseInt(activeOrders),
+        orders_today:         parseInt(s.orders_today),
+        active_orders:        parseInt(s.active_orders),
         revenue_this_month:   mr,
         revenue_last_month:   lmr,
         revenue_growth_pct:   revenueGrowth,
-        total_customers:      parseInt(totalCustomers),
-        active_technicians:   parseInt(activeTechs),
-        completed_this_month: parseInt(completedThisMonth),
+        total_customers:      parseInt(s.total_customers),
+        active_technicians:   parseInt(s.active_techs),
+        completed_this_month: parseInt(s.completed_this_month),
         orders_by_status:     byStatus.map((r) => ({ ...r, count: parseInt(r.count) })),
       },
     });
@@ -106,13 +91,14 @@ const getRevenueChart = async (req, res, next) => {
 
     const { rows: daily } = await pool.query(
       `SELECT
-         paid_at::date AS date,
-         COALESCE(SUM(amount), 0) AS revenue,
+         p.paid_at::date AS date,
+         COALESCE(SUM(p.amount), 0) AS revenue,
          COUNT(*) AS orders
-       FROM payments
-       WHERE status = 'paid'
-         AND paid_at >= CURRENT_DATE - ($1 || ' days')::INTERVAL
-       GROUP BY paid_at::date
+       FROM payments p
+       INNER JOIN repair_orders ro ON p.order_id = ro.id
+       WHERE p.status = 'paid' AND ro.status <> 'cancelled'
+         AND p.paid_at >= CURRENT_DATE - ($1 || ' days')::INTERVAL
+       GROUP BY p.paid_at::date
        ORDER BY date ASC`,
       [interval]
     );
@@ -138,7 +124,7 @@ const getTechnicianPerformance = async (req, res, next) => {
          COALESCE(SUM(p.amount), 0) AS revenue_generated
        FROM technicians t
        LEFT JOIN repair_orders ro ON ro.technician_id = t.id
-       LEFT JOIN payments p ON p.order_id = ro.id AND p.status = 'paid'
+       LEFT JOIN payments p ON p.order_id = ro.id AND p.status = 'paid' AND ro.status <> 'cancelled'
        WHERE t.is_active = true
        GROUP BY t.id, t.name, t.avatar_color
        ORDER BY completed DESC`
@@ -162,24 +148,24 @@ const getTechnicianPerformance = async (req, res, next) => {
 // GET /api/dashboard/notifications
 const getNotifications = async (req, res, next) => {
   try {
-    const { rows: newOrders } = await pool.query(
-      `SELECT order_id, device_brand, device_model, created_at
-       FROM repair_orders WHERE status = 'pending'
-       ORDER BY created_at DESC LIMIT 5`
-    );
-
-    const { rows: pendingPickups } = await pool.query(
-      `SELECT order_id, device_brand, scheduled_date
-       FROM repair_orders
-       WHERE status = 'pickup_assigned' AND scheduled_date = CURRENT_DATE
-       ORDER BY scheduled_time ASC`
-    );
-
-    const { rows: readyOrders } = await pool.query(
-      `SELECT order_id, device_brand, device_model
-       FROM repair_orders WHERE status = 'ready'
-       ORDER BY updated_at ASC LIMIT 5`
-    );
+    const [{ rows: newOrders }, { rows: pendingPickups }, { rows: readyOrders }] = await Promise.all([
+      pool.query(
+        `SELECT order_id, device_brand, device_model, created_at
+         FROM repair_orders WHERE status = 'pending'
+         ORDER BY created_at DESC LIMIT 5`
+      ),
+      pool.query(
+        `SELECT order_id, device_brand, scheduled_date
+         FROM repair_orders
+         WHERE status = 'pickup_assigned' AND scheduled_date = CURRENT_DATE
+         ORDER BY scheduled_time ASC`
+      ),
+      pool.query(
+        `SELECT order_id, device_brand, device_model
+         FROM repair_orders WHERE status = 'ready'
+         ORDER BY updated_at ASC LIMIT 5`
+      ),
+    ]);
 
     res.json({
       success: true,
@@ -193,48 +179,34 @@ const getNotifications = async (req, res, next) => {
 // GET /api/dashboard/telecaller-stats  (owner or telecaller — no financial data)
 const getTelecallerStats = async (req, res, next) => {
   try {
-    const { rows: [{ count: newOrdersToday }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM repair_orders WHERE created_at::date = CURRENT_DATE`
-    );
-
-    const { rows: [{ count: pendingCalls }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM order_activities
-       WHERE type = 'callback' AND status = 'pending'`
-    );
-
-    const { rows: [{ count: todaysRepairs }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM order_activities
-       WHERE type = 'repair_appointment' AND status = 'pending'
-         AND scheduled_at::date = CURRENT_DATE`
-    );
-
-    const { rows: [{ count: todaysFollowups }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM order_activities
-       WHERE type IN ('follow_up', 'post_repair_follow_up') AND status = 'pending'
-         AND scheduled_at::date = CURRENT_DATE`
-    );
-
-    const { rows: [{ count: overdue }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM order_activities
-       WHERE status = 'pending' AND scheduled_at < NOW()`
-    );
-
     // "Needs attention": orders sitting in 'pending' for more than 24h with no activity yet.
-    const { rows: [{ count: needsAttention }] } = await pool.query(
-      `SELECT COUNT(*) AS count FROM repair_orders ro
-       WHERE ro.status = 'pending' AND ro.created_at < NOW() - INTERVAL '24 hours'
-         AND NOT EXISTS (SELECT 1 FROM order_activities oa WHERE oa.order_id = ro.id)`
+    const { rows: [s] } = await pool.query(
+      `SELECT
+         (SELECT COUNT(*) FROM repair_orders WHERE created_at::date = CURRENT_DATE) AS new_orders_today,
+         (SELECT COUNT(*) FROM order_activities
+           WHERE type = 'callback' AND status = 'pending') AS pending_calls,
+         (SELECT COUNT(*) FROM order_activities
+           WHERE type = 'repair_appointment' AND status = 'pending'
+             AND scheduled_at::date = CURRENT_DATE) AS todays_repairs,
+         (SELECT COUNT(*) FROM order_activities
+           WHERE type IN ('follow_up', 'post_repair_follow_up') AND status = 'pending'
+             AND scheduled_at::date = CURRENT_DATE) AS todays_followups,
+         (SELECT COUNT(*) FROM order_activities
+           WHERE status = 'pending' AND scheduled_at < NOW()) AS overdue,
+         (SELECT COUNT(*) FROM repair_orders ro
+           WHERE ro.status = 'pending' AND ro.created_at < NOW() - INTERVAL '24 hours'
+             AND NOT EXISTS (SELECT 1 FROM order_activities oa WHERE oa.order_id = ro.id)) AS needs_attention`
     );
 
     res.json({
       success: true,
       data: {
-        new_orders_today: parseInt(newOrdersToday),
-        pending_calls:     parseInt(pendingCalls),
-        todays_repairs:    parseInt(todaysRepairs),
-        todays_followups:  parseInt(todaysFollowups),
-        overdue_activities: parseInt(overdue),
-        needs_attention:   parseInt(needsAttention),
+        new_orders_today: parseInt(s.new_orders_today),
+        pending_calls:     parseInt(s.pending_calls),
+        todays_repairs:    parseInt(s.todays_repairs),
+        todays_followups:  parseInt(s.todays_followups),
+        overdue_activities: parseInt(s.overdue),
+        needs_attention:   parseInt(s.needs_attention),
       },
     });
   } catch (err) {

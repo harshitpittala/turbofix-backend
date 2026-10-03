@@ -243,14 +243,13 @@ const getOrders = async (req, res, next) => {
     const orderCol = ALLOWED_SORT[sort_by] || 'ro.created_at';
     const orderDir = sort_dir === 'asc' ? 'ASC' : 'DESC';
 
-    const { rows: countRows } = await pool.query(
+    const countQuery = pool.query(
       `SELECT COUNT(*) AS total FROM repair_orders ro
        LEFT JOIN customers c ON ro.customer_id = c.id ${where}`,
       params
     );
-    const total = parseInt(countRows[0].total);
 
-    const { rows: orders } = await pool.query(
+    const listQuery = pool.query(
       `SELECT
          ro.id, ro.order_id, ro.status, ro.priority,
          ro.device_brand, ro.device_model, ro.services,
@@ -275,6 +274,9 @@ const getOrders = async (req, res, next) => {
        LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
       [...params, parseInt(limit), offset]
     );
+
+    const [{ rows: countRows }, { rows: orders }] = await Promise.all([countQuery, listQuery]);
+    const total = parseInt(countRows[0].total);
 
     res.json({
       success: true,
@@ -314,33 +316,29 @@ const getOrderById = async (req, res, next) => {
 
     const order = rows[0];
 
-    // Fetch images
-    const { rows: images } = await pool.query(
-      'SELECT id, filename, url, uploaded_at FROM order_images WHERE order_id = $1',
-      [order.id]
-    );
-
-    // Fetch status history
-    const { rows: history } = await pool.query(
-      'SELECT * FROM order_status_history WHERE order_id = $1 ORDER BY created_at ASC',
-      [order.id]
-    );
-
-    // Fetch payments
-    const { rows: payments } = await pool.query(
-      'SELECT * FROM payments WHERE order_id = $1 ORDER BY created_at DESC',
-      [order.id]
-    );
-
-    // Fetch scheduled activities (callbacks, follow-ups, etc.)
-    const { rows: activities } = await pool.query(
-      `SELECT oa.*, a.name AS assigned_to_name
-       FROM order_activities oa
-       LEFT JOIN admins a ON oa.assigned_to_id = a.id
-       WHERE oa.order_id = $1
-       ORDER BY oa.scheduled_at ASC`,
-      [order.id]
-    );
+    const [{ rows: images }, { rows: history }, { rows: payments }, { rows: activities }] = await Promise.all([
+      pool.query(
+        'SELECT id, filename, url, uploaded_at FROM order_images WHERE order_id = $1',
+        [order.id]
+      ),
+      pool.query(
+        'SELECT * FROM order_status_history WHERE order_id = $1 ORDER BY created_at ASC',
+        [order.id]
+      ),
+      pool.query(
+        'SELECT * FROM payments WHERE order_id = $1 ORDER BY created_at DESC',
+        [order.id]
+      ),
+      // Scheduled activities (callbacks, follow-ups, etc.)
+      pool.query(
+        `SELECT oa.*, a.name AS assigned_to_name
+         FROM order_activities oa
+         LEFT JOIN admins a ON oa.assigned_to_id = a.id
+         WHERE oa.order_id = $1
+         ORDER BY oa.scheduled_at ASC`,
+        [order.id]
+      ),
+    ]);
 
     const full = { ...order, images, history, payments, activities };
     res.json({ success: true, data: sanitizeOrderForRole(full, req.user) });

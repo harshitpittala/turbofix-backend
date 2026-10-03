@@ -2,9 +2,18 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#111827" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="TurboFix CRM" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="icon" href="./icons/favicon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
   <title>Schedules — TurboFix CRM</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="./css/crm.css" />
 </head>
@@ -16,25 +25,7 @@
       <div class="logo-icon">T</div>
       <div><div class="logo-text">TurboFix</div><div class="logo-sub">CRM Dashboard</div></div>
     </div>
-    <nav class="sidebar-nav">
-      <div class="nav-section">
-        <div class="nav-label">Main</div>
-        <a href="./index.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>Dashboard</a>
-        <a href="./telecaller-dashboard.html" class="nav-item" data-telecaller-only><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"/></svg>Dashboard</a>
-        <a href="./orders.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z"/></svg>Orders</a>
-        <a href="./customers.html" class="nav-item"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"/></svg>Customers</a>
-        <a href="./schedules.html" class="nav-item active"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5"/></svg>Schedules</a>
-      </div>
-      <div class="nav-section" data-owner-only>
-        <div class="nav-label">Management</div>
-        <a href="./technicians.html" class="nav-item" data-owner-only>Technicians</a>
-        <a href="./payments.html" class="nav-item" data-owner-only>Payments</a>
-        <a href="./analysis.html" class="nav-item" data-owner-only>Analysis</a>
-      </div>
-      <div class="nav-section">
-        <a href="#" class="nav-item" onclick="logout();return false;"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9"/></svg>Sign Out</a>
-      </div>
-    </nav>
+    <nav class="sidebar-nav" aria-label="Main navigation"><!-- built by renderSidebarNav() in js/auth.js --></nav>
     <div class="sidebar-bottom">
       <div class="sidebar-user">
         <div class="sidebar-user-avatar" id="sidebar-user-avatar">A</div>
@@ -58,21 +49,21 @@
       <div class="toolbar">
         <div class="search-box">
           <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 15.803a7.5 7.5 0 0010.607 10.607z"/></svg>
-          <input type="text" placeholder="Name or phone…" oninput="debounceSearch(this.value)" />
+          <input type="text" placeholder="Name or phone…" aria-label="Search reminders" oninput="debounceSearch(this.value)" />
         </div>
-        <select class="form-control" style="width:150px;" onchange="applyFilter('view',this.value)">
+        <select class="form-control" style="width:150px;" aria-label="When" onchange="applyFilter('view',this.value)">
           <option value="">All</option>
           <option value="today" selected>Today</option>
           <option value="upcoming">Upcoming</option>
           <option value="overdue">Overdue</option>
         </select>
-        <select class="form-control" style="width:150px;" onchange="applyFilter('status',this.value)">
+        <select class="form-control" style="width:150px;" aria-label="Status" onchange="applyFilter('status',this.value)">
           <option value="pending" selected>Pending</option>
           <option value="done">Done</option>
           <option value="cancelled">Not Interested / Cancelled</option>
           <option value="">All Statuses</option>
         </select>
-        <select class="form-control" style="width:200px;" onchange="applyFilter('type',this.value)">
+        <select class="form-control" style="width:200px;" aria-label="Type" onchange="applyFilter('type',this.value)">
           <option value="">All Types</option>
         </select>
         <div style="flex:1;"></div>
@@ -83,7 +74,7 @@
       </div>
 
       <div class="table-wrapper">
-        <table>
+        <table class="table-cards">
           <thead>
             <tr>
               <th>Contact</th>
@@ -143,8 +134,13 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">Interested In</label>
-        <input type="text" class="form-control" id="act-service" placeholder="e.g. Screen replacement (optional)" />
+        <label class="form-label">Interested In & Estimated Price</label>
+        <div id="act-services" style="display:flex;flex-direction:column;gap:4px;font-size:13px;"></div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;">
+          <input type="text" class="form-control" id="act-service-other" placeholder="Other service (optional)" style="flex:1;" oninput="recalcActServices()" />
+          <input type="number" class="form-control" id="act-service-other-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcActServices()" />
+        </div>
+        <div id="act-services-total" style="display:none;margin-top:8px;font-size:13px;font-weight:600;color:var(--text);text-align:right;"></div>
       </div>
 
       <div class="form-row">
@@ -226,6 +222,77 @@
     }
   }
 
+  // Same service list as the Add Order form, so a lead converts cleanly.
+  const ACT_SERVICES = ['Screen Replacement', 'Battery Replacement', 'Camera Module', 'Water Damage',
+    'Speaker / Mic', 'Charging Port', 'Back Panel', 'Software / Data'];
+
+  (function renderActServices() {
+    document.getElementById('act-services').innerHTML = ACT_SERVICES.map(svc => `
+      <div class="service-row" style="display:flex;align-items:center;gap:10px;padding:4px 0;">
+        <label style="display:flex;align-items:center;gap:6px;flex:1;"><input type="checkbox" value="${esc(svc)}" onchange="recalcActServices()" /> ${esc(svc)}</label>
+        <input type="number" class="form-control service-cost" min="0" step="1" placeholder="₹" style="width:100px;display:none;" oninput="recalcActServices()" />
+      </div>`).join('');
+  })();
+
+  // Shows a price box next to each ticked service (and next to "Other" once
+  // typed), and totals the prices entered so far.
+  function recalcActServices() {
+    let total = 0;
+    document.querySelectorAll('#act-services .service-row').forEach(row => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      const costInput = row.querySelector('.service-cost');
+      costInput.style.display = cb.checked ? '' : 'none';
+      if (!cb.checked) costInput.value = '';
+      else total += parseFloat(costInput.value) || 0;
+    });
+    const otherService = document.getElementById('act-service-other').value.trim();
+    const otherCost = document.getElementById('act-service-other-cost');
+    otherCost.style.display = otherService ? '' : 'none';
+    if (!otherService) otherCost.value = '';
+    else total += parseFloat(otherCost.value) || 0;
+
+    const totalEl = document.getElementById('act-services-total');
+    totalEl.style.display = total ? '' : 'none';
+    totalEl.textContent = total ? `Estimated total: ${formatCurrency(total)}` : '';
+  }
+
+  // [{ service, cost }] for every ticked/typed service; cost is null when no price was entered.
+  function getActServiceEstimates() {
+    const toCost = v => { const n = parseFloat(v); return Number.isFinite(n) && n >= 0 ? n : null; };
+    const estimates = [];
+    document.querySelectorAll('#act-services .service-row').forEach(row => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      if (cb.checked) estimates.push({ service: cb.value, cost: toCost(row.querySelector('.service-cost').value) });
+    });
+    const otherService = document.getElementById('act-service-other').value.trim();
+    if (otherService) estimates.push({ service: otherService, cost: toCost(document.getElementById('act-service-other-cost').value) });
+    return estimates;
+  }
+
+  // Fills the form from saved estimates. Anything not in the fixed list goes
+  // into the "Other" box (several are joined with commas, prices summed).
+  function setActServices(estimates) {
+    document.querySelectorAll('#act-services .service-row').forEach(row => {
+      const cb = row.querySelector('input[type="checkbox"]');
+      const e = estimates.find(x => x.service === cb.value);
+      cb.checked = !!e;
+      row.querySelector('.service-cost').value = e && e.cost != null ? e.cost : '';
+    });
+    const others = estimates.filter(x => !ACT_SERVICES.includes(x.service));
+    const otherCost = others.reduce((sum, x) => sum + (Number(x.cost) || 0), 0);
+    document.getElementById('act-service-other').value = others.map(x => x.service).join(', ');
+    document.getElementById('act-service-other-cost').value = others.some(x => x.cost != null) ? otherCost : '';
+    recalcActServices();
+  }
+
+  function serviceSummaryHtml(a) {
+    const est = Array.isArray(a.service_estimates) ? a.service_estimates : [];
+    if (!est.length) return a.service ? `<div style="color:var(--text-muted);">${esc(a.service)}</div>` : '';
+    const total = est.reduce((sum, e) => sum + (Number(e.cost) || 0), 0);
+    return est.map(e => `<div style="color:var(--text-muted);">${esc(e.service)}${e.cost != null ? ` · ${formatCurrency(e.cost)}` : ''}</div>`).join('')
+      + (est.length > 1 && total ? `<div style="font-weight:600;color:var(--text);">Total ${formatCurrency(total)}</div>` : '');
+  }
+
   function getActBrand() {
     const sel = document.getElementById('act-brand').value;
     return sel === 'Other' ? document.getElementById('act-brand-other').value.trim() : sel;
@@ -274,6 +341,7 @@
   }
 
   async function loadActivities() {
+    const isStale = beginRequest('activities');
     const tbody = document.getElementById('activities-tbody');
     tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;"><div class="spinner" style="margin:0 auto;"></div></td></tr>`;
 
@@ -286,7 +354,12 @@
     });
 
     const r = await apiCall(`/activities?${params}`);
-    if (!r || !r.ok) { tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:var(--danger);padding:30px;">Failed to load</td></tr>`; return; }
+    if (isStale()) return;
+    if (!r || !r.ok) {
+      tbody.innerHTML = `<tr><td colspan="7">${loadErrorHTML(r, 'Failed to load reminders', 'loadActivities()')}</td></tr>`;
+      document.getElementById('activities-pagination').innerHTML = '';
+      return;
+    }
 
     const { data, pagination } = r.data;
     if (!data.length) {
@@ -300,23 +373,23 @@
       const overdue = new Date(a.scheduled_at) < new Date() && a.status === 'pending';
       return `
       <tr>
-        <td>
+        <td data-label="Contact">
           <div style="font-weight:600;font-size:13px;">${esc(a.customer_name||'Unnamed lead')}</div>
           <div style="font-size:11px;color:var(--text-muted);">${esc(a.customer_phone||'—')}</div>
           ${a.order_ref ? `<a href="./orders.html?id=${encodeURIComponent(a.order_ref)}" style="font-size:10px;color:var(--accent);">${esc(a.order_ref)}</a>` : ''}
         </td>
-        <td style="font-size:12px;color:var(--text-dim);">
+        <td data-label="Interested In" style="font-size:12px;color:var(--text-dim);">
           ${device ? `<div>${esc(device)}</div>` : ''}
-          ${a.service ? `<div style="color:var(--text-muted);">${esc(a.service)}</div>` : ''}
+          ${serviceSummaryHtml(a)}
           ${!device && !a.service ? '—' : ''}
         </td>
-        <td style="font-size:13px;">${CRM.ACTIVITY_TYPE_LABELS[a.type]||a.type}</td>
-        <td style="font-size:12px;color:${overdue ? 'var(--danger)' : 'var(--text-dim)'};">${formatDateTime(a.scheduled_at)}</td>
-        <td>${activityStatusBadge(a.status)}</td>
-        <td style="font-size:12px;">${esc(a.assigned_to_name||'Unassigned')}</td>
-        <td>
+        <td data-label="Type" style="font-size:13px;">${CRM.ACTIVITY_TYPE_LABELS[a.type]||a.type}</td>
+        <td data-label="When" style="font-size:12px;color:${overdue ? 'var(--danger)' : 'var(--text-dim)'};">${formatDateTime(a.scheduled_at)}</td>
+        <td data-label="Status">${activityStatusBadge(a.status)}</td>
+        <td data-label="Assigned" style="font-size:12px;">${esc(a.assigned_to_name||'Unassigned')}</td>
+        <td class="td-actions">
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
-            ${a.customer_phone ? `<a href="tel:${esc(a.customer_phone)}" class="btn btn-secondary btn-sm" title="Call">📞</a>` : ''}
+            ${a.customer_phone ? `<a href="tel:${esc(a.customer_phone)}" class="btn btn-secondary btn-sm" title="Call" aria-label="Call ${esc(a.customer_name || a.customer_phone)}">📞</a>` : ''}
             ${a.customer_phone ? `<a href="${waLink(a.customer_phone,'Hi, calling from TurboFix')}" target="_blank" class="btn btn-success btn-sm">WA</a>` : ''}
             ${a.status === 'pending' && !a.order_ref ? `<button class="btn btn-primary btn-sm" onclick="convertToOrder(${a.id})">Create Order</button>` : ''}
             ${a.status === 'pending' ? `<button class="btn btn-secondary btn-sm" onclick="markStatus(${a.id},'done')">Done</button>` : ''}
@@ -352,9 +425,9 @@
     document.getElementById('act-name').value = '';
     document.getElementById('act-phone').value = '';
     document.getElementById('act-existing-customer').style.display = 'none';
-    document.getElementById('act-service').value = '';
+    setActServices([]);
     document.getElementById('act-notes').value = '';
-    document.getElementById('act-date').value = new Date().toISOString().slice(0,10);
+    document.getElementById('act-date').value = localISODate();
     document.getElementById('act-time').value = '10:00';
     document.getElementById('act-type').value = 'callback';
     document.getElementById('act-assigned').value = '';
@@ -372,7 +445,9 @@
         const a = r.data.data;
         document.getElementById('act-name').value = a.customer_name || '';
         document.getElementById('act-phone').value = a.customer_phone || '';
-        document.getElementById('act-service').value = a.service || '';
+        // Older reminders only have the free-text `service`; show it as "Other".
+        const est = Array.isArray(a.service_estimates) ? a.service_estimates : [];
+        setActServices(est.length ? est : (a.service ? [{ service: a.service, cost: null }] : []));
         document.getElementById('act-type').value = a.type;
         document.getElementById('act-assigned').value = a.assigned_to_id || '';
         document.getElementById('act-notes').value = a.notes || '';
@@ -388,7 +463,7 @@
           document.getElementById('act-order-banner').textContent = `Linked to order ${a.order_ref}`;
         }
         const dt = new Date(a.scheduled_at);
-        document.getElementById('act-date').value = dt.toISOString().slice(0,10);
+        document.getElementById('act-date').value = localISODate(dt);
         document.getElementById('act-time').value = dt.toTimeString().slice(0,5);
       }
     } else if (orderIdToLink) {
@@ -418,7 +493,7 @@
     const phone    = document.getElementById('act-phone').value.trim();
     const brand    = getActBrand();
     const model    = getActModel();
-    const service  = document.getElementById('act-service').value.trim();
+    const serviceEstimates = getActServiceEstimates();
     const type     = document.getElementById('act-type').value;
     const assigned = document.getElementById('act-assigned').value;
     const date     = document.getElementById('act-date').value;
@@ -433,7 +508,7 @@
     const payload = {
       customer_name: name || undefined, phone, type,
       device_brand: brand || undefined, device_model: model || undefined,
-      service: service || undefined,
+      service_estimates: serviceEstimates,
       scheduled_at: scheduledAt, notes, assigned_to_id: assigned || null,
       order_id: orderRef || undefined,
     };
@@ -448,10 +523,6 @@
     if (linkedOrderId) window.history.replaceState({}, '', './schedules.html');
     loadActivities();
   }
-
-  document.querySelectorAll('.modal-overlay').forEach(el => {
-    el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
-  });
 
   loadActivities();
 </script>

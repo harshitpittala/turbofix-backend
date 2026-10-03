@@ -5,3 +5,6 @@ uploads/*
 *.log
 .DS_Store
 dist/
+
+# Stray nested clone (was a broken submodule)
+turbofix-backend/
